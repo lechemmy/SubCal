@@ -27,7 +27,14 @@
             </div>
             <div class="card-body">
                 <form method="get" class="row g-3">
-                    <div class="col-md-6">
+                    <div class="col-md-12 mb-3">
+                        <label for="view_type" class="form-label">View Type</label>
+                        <select name="view_type" id="view_type" class="form-select">
+                            <option value="month" {% if view_type == 'month' %}selected{% endif %}>Month View</option>
+                            <option value="year" {% if view_type == 'year' %}selected{% endif %}>Year View</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6 {% if view_type == 'year' %}d-none{% endif %}" id="month-select">
                         <label for="month" class="form-label">Month</label>
                         <select name="month" id="month" class="form-select">
                             {% for i in "123456789101"|make_list %}
@@ -58,19 +65,32 @@
     </div>
     <div class="col-md-8 mb-3">
         <div class="d-flex justify-content-between align-items-center">
-            <a href="?month={{ prev_month }}&year={{ prev_year }}" class="btn btn-outline-primary">
-                &laquo; Previous Month
-            </a>
-            <a href="{% url 'subscription-calendar' %}" class="btn btn-outline-secondary">
-                Current Month
-            </a>
-            <a href="?month={{ next_month }}&year={{ next_year }}" class="btn btn-outline-primary">
-                Next Month &raquo;
-            </a>
+            {% if view_type == 'month' %}
+                <a href="?month={{ prev_month }}&year={{ prev_year }}&view_type={{ view_type }}" class="btn btn-outline-primary">
+                    &laquo; Previous Month
+                </a>
+                <a href="{% url 'subscription-calendar' %}?view_type={{ view_type }}" class="btn btn-outline-secondary">
+                    Current Month
+                </a>
+                <a href="?month={{ next_month }}&year={{ next_year }}&view_type={{ view_type }}" class="btn btn-outline-primary">
+                    Next Month &raquo;
+                </a>
+            {% else %}
+                <a href="?year={{ prev_year }}&view_type={{ view_type }}" class="btn btn-outline-primary">
+                    &laquo; Previous Year
+                </a>
+                <a href="{% url 'subscription-calendar' %}?view_type={{ view_type }}" class="btn btn-outline-secondary">
+                    Current Year
+                </a>
+                <a href="?year={{ next_year }}&view_type={{ view_type }}" class="btn btn-outline-primary">
+                    Next Year &raquo;
+                </a>
+            {% endif %}
         </div>
     </div>
 </div>
 
+{% if view_type == 'month' %}
 <div class="row">
     <div class="col">
         <div class="table-responsive">
@@ -123,4 +143,93 @@
         </div>
     </div>
 </div>
+{% else %}
+<div class="row">
+    <div class="col">
+        <div class="row row-cols-1 row-cols-md-3 g-4">
+            {% for month_data in year_calendar %}
+                <div class="col">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <a href="?month={{ month_data.month_num }}&year={{ year }}&view_type=month" class="text-decoration-none">
+                                    {{ month_data.month_name }}
+                                </a>
+                            </h5>
+                        </div>
+                        <div class="card-body p-2">
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th class="text-center small">M</th>
+                                            <th class="text-center small">T</th>
+                                            <th class="text-center small">W</th>
+                                            <th class="text-center small">T</th>
+                                            <th class="text-center small">F</th>
+                                            <th class="text-center small">S</th>
+                                            <th class="text-center small">S</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for week in month_data.calendar %}
+                                            <tr>
+                                                {% for day in week %}
+                                                    {% if day != 0 %}
+                                                        <td class="text-center position-relative" style="cursor: pointer;" onclick="window.location.href='{% url 'subscription-day' year month_data.month_num day %}'" 
+                                                            {% if day in month_data.calendar_data and month_data.calendar_data|get_item:day %}
+                                                                title="{% for subscription in month_data.calendar_data|get_item:day %}{{ subscription.name }}{% if not forloop.last %}, {% endif %}{% endfor %}"
+                                                                data-bs-toggle="tooltip" data-bs-placement="top"
+                                                            {% endif %}>
+                                                            <span class="small">{{ day }}</span>
+                                                            {% if day in month_data.calendar_data and month_data.calendar_data|get_item:day %}
+                                                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                                                    {{ month_data.calendar_data|get_item:day|length }}
+                                                                </span>
+                                                            {% endif %}
+                                                        </td>
+                                                    {% else %}
+                                                        <td class="bg-secondary bg-opacity-25"></td>
+                                                    {% endif %}
+                                                {% endfor %}
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const viewTypeSelect = document.getElementById('view_type');
+        const monthSelect = document.getElementById('month-select');
+
+        // Function to toggle month select visibility based on view type
+        function toggleMonthSelect() {
+            if (viewTypeSelect.value === 'year') {
+                monthSelect.classList.add('d-none');
+            } else {
+                monthSelect.classList.remove('d-none');
+            }
+        }
+
+        // Set initial state
+        toggleMonthSelect();
+
+        // Add event listener for changes
+        viewTypeSelect.addEventListener('change', toggleMonthSelect);
+
+        // Initialize Bootstrap tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    });
+</script>
 {% endblock %}

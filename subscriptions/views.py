@@ -100,61 +100,111 @@ def home(request):
     return render(request, 'subscriptions/home.html')
 
 def calendar_view(request):
-    # Get current month and year
+    # Get current month, year, and view type
     now = datetime.now()
     month = int(request.GET.get('month', now.month))
     year = int(request.GET.get('year', now.year))
-
-    # Create a calendar for the current month
-    cal = calendar.monthcalendar(year, month)
-    month_name = calendar.month_name[month]
+    view_type = request.GET.get('view_type', 'month')  # Default to month view
 
     # Get all subscriptions
     subscriptions = Subscription.objects.all()
 
-    # Calculate renewal dates for each subscription
-    calendar_data = {}
-    for day_idx, week in enumerate(cal):
-        for weekday_idx, day in enumerate(week):
-            if day != 0:  # Skip days that are not part of the month
-                calendar_data.setdefault(day, [])
+    if view_type == 'month':
+        # Create a calendar for the current month
+        cal = calendar.monthcalendar(year, month)
+        month_name = calendar.month_name[month]
 
-    for subscription in subscriptions:
-        start_date = subscription.start_date
-        renewal_dates = calculate_next_renewal_date(start_date, subscription.renewal_period, year, month)
+        # Calculate renewal dates for each subscription
+        calendar_data = {}
+        for day_idx, week in enumerate(cal):
+            for weekday_idx, day in enumerate(week):
+                if day != 0:  # Skip days that are not part of the month
+                    calendar_data.setdefault(day, [])
 
-        for renewal_date in renewal_dates:
-            if renewal_date.day in calendar_data:
-                calendar_data[renewal_date.day].append(subscription)
+        for subscription in subscriptions:
+            start_date = subscription.start_date
+            renewal_dates = calculate_next_renewal_date(start_date, subscription.renewal_period, year, month)
 
-    # Previous and next month links
-    prev_month = month - 1
-    prev_year = year
-    if prev_month == 0:
-        prev_month = 12
-        prev_year -= 1
+            for renewal_date in renewal_dates:
+                if renewal_date.day in calendar_data:
+                    calendar_data[renewal_date.day].append(subscription)
 
-    next_month = month + 1
-    next_year = year
-    if next_month == 13:
-        next_month = 1
-        next_year += 1
+        # Previous and next month links
+        prev_month = month - 1
+        prev_year = year
+        if prev_month == 0:
+            prev_month = 12
+            prev_year -= 1
 
-    # Get current year for the year dropdown
-    current_year = datetime.now().year
+        next_month = month + 1
+        next_year = year
+        if next_month == 13:
+            next_month = 1
+            next_year += 1
 
-    context = {
-        'calendar': cal,
-        'month_name': month_name,
-        'year': year,
-        'month': month,
-        'calendar_data': calendar_data,
-        'prev_month': prev_month,
-        'prev_year': prev_year,
-        'next_month': next_month,
-        'next_year': next_year,
-        'current_year': current_year,
-    }
+        # Get current year for the year dropdown
+        current_year = datetime.now().year
+
+        context = {
+            'calendar': cal,
+            'month_name': month_name,
+            'year': year,
+            'month': month,
+            'calendar_data': calendar_data,
+            'prev_month': prev_month,
+            'prev_year': prev_year,
+            'next_month': next_month,
+            'next_year': next_year,
+            'current_year': current_year,
+            'view_type': view_type,
+        }
+    else:  # Year view
+        # Create a calendar for each month of the year
+        year_calendar = []
+        year_calendar_data = {}
+
+        for month_num in range(1, 13):
+            month_cal = calendar.monthcalendar(year, month_num)
+            month_name = calendar.month_name[month_num]
+
+            # Initialize calendar data for this month
+            month_data = {}
+            for week in month_cal:
+                for day in week:
+                    if day != 0:  # Skip days that are not part of the month
+                        month_data.setdefault(day, [])
+
+            # Calculate renewal dates for each subscription for this month
+            for subscription in subscriptions:
+                start_date = subscription.start_date
+                renewal_dates = calculate_next_renewal_date(start_date, subscription.renewal_period, year, month_num)
+
+                for renewal_date in renewal_dates:
+                    if renewal_date.day in month_data:
+                        month_data[renewal_date.day].append(subscription)
+
+            year_calendar.append({
+                'month_num': month_num,
+                'month_name': month_name,
+                'calendar': month_cal,
+                'calendar_data': month_data
+            })
+
+        # Previous and next year links
+        prev_year = year - 1
+        next_year = year + 1
+
+        # Get current year for the year dropdown
+        current_year = datetime.now().year
+
+        context = {
+            'year_calendar': year_calendar,
+            'year': year,
+            'prev_year': prev_year,
+            'next_year': next_year,
+            'current_year': current_year,
+            'view_type': view_type,
+        }
 
     return render(request, 'subscriptions/subscription_calendar.html', context)
 
