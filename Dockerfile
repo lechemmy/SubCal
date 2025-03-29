@@ -12,14 +12,17 @@ RUN pip install --no-cache-dir -r requirements.txt gunicorn
 # Copy project
 COPY . .
 
+# Create directories for static files and database
+RUN mkdir -p /app/staticfiles /app/data
+ENV STATIC_ROOT=/app/staticfiles
+ENV DATABASE_DIR=/app/data
+
 # Run migrations and create default data
 RUN python manage.py migrate
 RUN python create_default_categories.py
 RUN python create_default_currencies.py
 
 # Collect static files
-RUN mkdir -p /app/staticfiles
-ENV STATIC_ROOT=/app/staticfiles
 RUN python manage.py collectstatic --noinput
 
 # Set environment variables
