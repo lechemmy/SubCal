@@ -19,6 +19,7 @@ SubCal is a web application built with Django that helps you track and manage yo
 - Python 3
 - SQLite (default database)
 - Python-dateutil for date manipulation
+- Python-dotenv for environment variable management
 - HTML/CSS for frontend
 
 ## Installation
@@ -74,6 +75,44 @@ SubCal is a web application built with Django that helps you track and manage yo
    ```
 
 3. Access the application at http://localhost:8000/
+
+## Environment Configuration
+
+SubCal uses environment variables for configuration, which can be set in a `.env` file at the project root. This allows for different configurations between development and production environments.
+
+### Setting Up Environment Variables
+
+1. Copy the example environment file to create your own:
+   ```
+   cp .env.example .env
+   ```
+
+2. Edit the `.env` file to configure your environment:
+   ```
+   # Development environment (set to False in production)
+   DEBUG=True
+
+   # Secret key (generate a new one for production)
+   SECRET_KEY=your-secret-key-here
+
+   # Allowed hosts (comma-separated list)
+   ALLOWED_HOSTS=localhost,127.0.0.1
+   ```
+
+3. For production environments, make sure to:
+   - Set `DEBUG=False`
+   - Generate a new secure `SECRET_KEY`
+   - Set `ALLOWED_HOSTS` to your domain(s)
+
+### Available Environment Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| DEBUG | Enable debug mode | True |
+| SECRET_KEY | Django secret key | Default insecure key |
+| ALLOWED_HOSTS | Comma-separated list of allowed hosts | localhost,127.0.0.1 |
+| DATABASE_DIR | Directory for SQLite database | Project root |
+| STATIC_ROOT | Directory for collected static files | staticfiles/ |
 
 #### Docker Commands
 
