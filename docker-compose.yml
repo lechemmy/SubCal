@@ -8,10 +8,12 @@ services:
     volumes:
       - sqlite_data:/app/data
       - static_data:/app/staticfiles
+    env_file:
+      - .env.docker
     environment:
       - DEBUG=False
-      - SECRET_KEY=your-production-secret-key-here
-      - ALLOWED_HOSTS=localhost,127.0.0.1
+      - SECRET_KEY=${SECRET_KEY:-your-production-secret-key-here}
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS:-localhost,127.0.0.1,*}
       - DATABASE_DIR=/app/data
     restart: unless-stopped
 

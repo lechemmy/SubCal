@@ -30,7 +30,7 @@ ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 ENV DEBUG=False
 ENV SECRET_KEY=your-secret-key-here
-ENV ALLOWED_HOSTS=localhost,127.0.0.1
+# ALLOWED_HOSTS is set in docker-compose.yml or at runtime
 
 # Expose port
 EXPOSE 8000

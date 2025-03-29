@@ -69,12 +69,35 @@ SubCal is a web application built with Django that helps you track and manage yo
    cd SubCal
    ```
 
-2. Build and start the Docker container:
+2. Configure Docker environment (optional):
+   ```
+   cp .env.docker.example .env.docker
+   ```
+   Edit `.env.docker` to set your environment variables, including `ALLOWED_HOSTS`.
+
+3. Build and start the Docker container:
    ```
    docker-compose up -d
    ```
 
-3. Access the application at http://localhost:8000/
+4. Access the application at http://localhost:8001/
+
+#### Configuring ALLOWED_HOSTS for Docker
+
+The Docker setup uses the `.env.docker` file to configure environment variables, including `ALLOWED_HOSTS`. By default, it's set to `localhost,127.0.0.1,*` which allows any host to access the application.
+
+For production, it's recommended to set `ALLOWED_HOSTS` to a specific list of domains:
+
+```
+# In .env.docker
+ALLOWED_HOSTS=yourdomain.com,www.yourdomain.com
+```
+
+You can also override this setting when starting the container:
+
+```
+ALLOWED_HOSTS=yourdomain.com docker-compose up -d
+```
 
 ## Environment Configuration
 
