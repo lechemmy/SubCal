@@ -25,7 +25,7 @@ SubCal is a web application built with Django that helps you track and manage yo
 
 1. Clone the repository:
    ```
-   git clone https://github.com/yourusername/SubCal.git
+   git clone https://github.com/lechemmy/SubCal.git
    cd SubCal
    ```
 
