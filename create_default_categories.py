@@ -1,3 +1,9 @@
+import os
+import django
+
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'SubCal.settings')
+django.setup()
+
 from subscriptions.models import Category
 
 # Define the default categories
