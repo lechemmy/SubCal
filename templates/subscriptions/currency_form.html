@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    {% if form.instance.id %}
+        Edit {{ form.instance.code }} - SubCal
+    {% else %}
+        Add New Currency - SubCal
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1>
+            {% if form.instance.id %}
+                Edit Currency
+            {% else %}
+                Add New Currency
+            {% endif %}
+        </h1>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <form method="post" novalidate>
+                    {% csrf_token %}
+
+                    <div class="mb-3">
+                        <label for="{{ form.code.id_for_label }}" class="form-label">Code</label>
+                        {{ form.code.errors }}
+                        <input type="text" name="{{ form.code.name }}" id="{{ form.code.id_for_label }}" 
+                               class="form-control {% if form.code.errors %}is-invalid{% endif %}" 
+                               value="{{ form.code.value|default:'' }}" required>
+                        <div class="form-text">Enter the 3-letter code for the currency (e.g., USD, EUR, GBP).</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.name.id_for_label }}" class="form-label">Name</label>
+                        {{ form.name.errors }}
+                        <input type="text" name="{{ form.name.name }}" id="{{ form.name.id_for_label }}" 
+                               class="form-control {% if form.name.errors %}is-invalid{% endif %}" 
+                               value="{{ form.name.value|default:'' }}" required>
+                        <div class="form-text">Enter the display name of the currency (e.g., USD ($)).</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.symbol.id_for_label }}" class="form-label">Symbol</label>
+                        {{ form.symbol.errors }}
+                        <input type="text" name="{{ form.symbol.name }}" id="{{ form.symbol.id_for_label }}" 
+                               class="form-control {% if form.symbol.errors %}is-invalid{% endif %}" 
+                               value="{{ form.symbol.value|default:'' }}" required>
+                        <div class="form-text">Enter the symbol for the currency (e.g., $, €, £).</div>
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'settings' %}" class="btn btn-outline-primary">Cancel</a>
+                        <button type="submit" class="btn btn-success">
+                            {% if form.instance.id %}
+                                Update Currency
+                            {% else %}
+                                Add Currency
+                            {% endif %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Tips</h5>
+            </div>
+            <div class="card-body">
+                <ul class="mb-0">
+                    <li>Use standard 3-letter currency codes (ISO 4217).</li>
+                    <li>Examples: USD, EUR, GBP, JPY, CAD</li>
+                    <li>The symbol is used when displaying costs.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

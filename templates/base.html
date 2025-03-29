@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}SubCal - Subscription Calendar{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        :root {
+            /* Dark mode variables */
+            --dark-bg: #121212;
+            --dark-surface: #1e1e1e;
+            --dark-primary: #bb86fc;
+            --dark-secondary: #03dac6;
+            --dark-error: #cf6679;
+            --dark-on-bg: #e1e1e1;
+            --dark-on-surface: #ffffff;
+            --dark-border: rgba(255, 255, 255, 0.125);
+            --dark-border-light: rgba(255, 255, 255, 0.2);
+            --dark-table-stripe: rgba(255, 255, 255, 0.05);
+            --dark-table-hover: rgba(255, 255, 255, 0.075);
+
+            /* Light mode variables */
+            --light-bg: #f8f9fa;
+            --light-surface: #ffffff;
+            --light-primary: #6200ee;
+            --light-secondary: #03dac6;
+            --light-error: #b00020;
+            --light-on-bg: #212529;
+            --light-on-surface: #000000;
+            --light-border: rgba(0, 0, 0, 0.125);
+            --light-border-light: rgba(0, 0, 0, 0.2);
+            --light-table-stripe: rgba(0, 0, 0, 0.05);
+            --light-table-hover: rgba(0, 0, 0, 0.075);
+
+            /* Default to dark mode */
+            --bg: var(--dark-bg);
+            --surface: var(--dark-surface);
+            --primary: var(--dark-primary);
+            --secondary: var(--dark-secondary);
+            --error: var(--dark-error);
+            --on-bg: var(--dark-on-bg);
+            --on-surface: var(--dark-on-surface);
+            --border: var(--dark-border);
+            --border-light: var(--dark-border-light);
+            --table-stripe: var(--dark-table-stripe);
+            --table-hover: var(--dark-table-hover);
+        }
+
+        /* Light mode class */
+        html.light-mode {
+            --bg: var(--light-bg);
+            --surface: var(--light-surface);
+            --primary: var(--light-primary);
+            --secondary: var(--light-secondary);
+            --error: var(--light-error);
+            --on-bg: var(--light-on-bg);
+            --on-surface: var(--light-on-surface);
+            --border: var(--light-border);
+            --border-light: var(--light-border-light);
+            --table-stripe: var(--light-table-stripe);
+            --table-hover: var(--light-table-hover);
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--on-bg);
+            min-height: 100vh;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .navbar {
+            background-color: var(--surface);
+            transition: background-color 0.3s;
+        }
+
+        .navbar-dark .navbar-nav .nav-link {
+            color: var(--dark-on-bg);
+            transition: color 0.3s;
+        }
+
+        .navbar-light .navbar-nav .nav-link {
+            color: var(--light-on-bg);
+            transition: color 0.3s;
+        }
+
+        .card, .list-group-item {
+            background-color: var(--surface);
+            color: var(--on-surface);
+            border-color: var(--border);
+            transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            border-color: var(--primary);
+            color: var(--on-surface);
+            transition: background-color 0.3s, border-color 0.3s;
+        }
+
+        .btn-success {
+            background-color: var(--secondary);
+            border-color: var(--secondary);
+            color: var(--on-surface);
+            transition: background-color 0.3s, border-color 0.3s;
+        }
+
+        .btn-danger {
+            background-color: var(--error);
+            border-color: var(--error);
+            transition: background-color 0.3s, border-color 0.3s;
+        }
+
+        .form-control, .form-select {
+            background-color: var(--surface);
+            border-color: var(--border-light);
+            color: var(--on-surface);
+            transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+        }
+
+        .form-control:focus, .form-select:focus {
+            background-color: var(--surface);
+            color: var(--on-surface);
+        }
+
+        .table {
+            color: var(--on-bg);
+            transition: color 0.3s;
+        }
+
+        .table-striped tbody tr:nth-of-type(odd) {
+            background-color: var(--table-stripe);
+            transition: background-color 0.3s;
+        }
+
+        .table-hover tbody tr:hover {
+            color: var(--on-surface);
+            background-color: var(--table-hover);
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        /* Theme toggle switch */
+        .theme-switch-wrapper {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .theme-switch {
+            display: inline-block;
+            cursor: pointer;
+            font-size: 1.5rem;
+            padding: 10px;
+            background-color: var(--surface);
+            border-radius: 50%;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            color: var(--on-surface);
+            transition: all 0.3s ease, background-color 0.3s, color 0.3s;
+        }
+
+        html.light-mode .theme-switch {
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Make text-muted white in dark mode */
+        html:not(.light-mode) .text-muted {
+            color: white !important;
+        }
+
+        .theme-switch:hover {
+            transform: scale(1.1);
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg mb-4" id="main-navbar">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'home' %}">SubCal</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'home' %}">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'subscription-list' %}">Subscriptions</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'subscription-calendar' %}">Calendar</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'subscription-create' %}">Add Subscription</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'settings' %}">Settings</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        {% block content %}{% endblock %}
+    </div>
+
+    <!-- Theme toggle switch -->
+    <div class="theme-switch-wrapper">
+        <div class="theme-switch" id="theme-toggle">
+            <i class="bi bi-moon-fill" id="theme-icon"></i>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Theme toggle functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const themeToggle = document.getElementById('theme-toggle');
+            const themeIcon = document.getElementById('theme-icon');
+            const htmlElement = document.documentElement;
+            const navbar = document.getElementById('main-navbar');
+
+            // Check for saved theme preference or use default (dark mode)
+            const currentTheme = localStorage.getItem('theme') || 'dark';
+
+            // Apply the saved theme or default
+            if (currentTheme === 'light') {
+                htmlElement.classList.add('light-mode');
+                themeIcon.classList.remove('bi-moon-fill');
+                themeIcon.classList.add('bi-sun-fill');
+                navbar.classList.add('navbar-light', 'bg-light');
+                navbar.classList.remove('navbar-dark');
+            } else {
+                htmlElement.classList.remove('light-mode');
+                themeIcon.classList.remove('bi-sun-fill');
+                themeIcon.classList.add('bi-moon-fill');
+                navbar.classList.add('navbar-dark');
+                navbar.classList.remove('navbar-light', 'bg-light');
+            }
+
+            // Toggle theme when the switch is clicked
+            themeToggle.addEventListener('click', function() {
+                if (htmlElement.classList.contains('light-mode')) {
+                    // Switch to dark mode
+                    htmlElement.classList.remove('light-mode');
+                    localStorage.setItem('theme', 'dark');
+                    themeIcon.classList.remove('bi-sun-fill');
+                    themeIcon.classList.add('bi-moon-fill');
+                    navbar.classList.add('navbar-dark');
+                    navbar.classList.remove('navbar-light', 'bg-light');
+                } else {
+                    // Switch to light mode
+                    htmlElement.classList.add('light-mode');
+                    localStorage.setItem('theme', 'light');
+                    themeIcon.classList.remove('bi-moon-fill');
+                    themeIcon.classList.add('bi-sun-fill');
+                    navbar.classList.add('navbar-light', 'bg-light');
+                    navbar.classList.remove('navbar-dark');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

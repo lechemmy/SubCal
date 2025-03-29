@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+
+{% block title %}SubCal - Home{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow-sm">
+            <div class="card-body text-center">
+                <h1 class="display-4 mb-4">Welcome to SubCal</h1>
+                <p class="lead">
+                    Track and manage all your subscriptions in one place.
+                </p>
+                <hr class="my-4">
+                <p>
+                    Keep a log of your subscriptions with details like name, cost, renewal period, and more.
+                    Never forget about a subscription renewal again!
+                </p>
+                <div class="mt-4">
+                    <a href="{% url 'subscription-list' %}" class="btn btn-primary me-2">View Subscriptions</a>
+                    <a href="{% url 'subscription-create' %}" class="btn btn-success">Add New Subscription</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

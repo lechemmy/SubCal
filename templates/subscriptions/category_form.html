@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    {% if form.instance.id %}
+        Edit {{ form.instance.name }} - SubCal
+    {% else %}
+        Add New Category - SubCal
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1>
+            {% if form.instance.id %}
+                Edit Category
+            {% else %}
+                Add New Category
+            {% endif %}
+        </h1>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <form method="post" novalidate>
+                    {% csrf_token %}
+
+                    <div class="mb-3">
+                        <label for="{{ form.name.id_for_label }}" class="form-label">Name</label>
+                        {{ form.name.errors }}
+                        <input type="text" name="{{ form.name.name }}" id="{{ form.name.id_for_label }}" 
+                               class="form-control {% if form.name.errors %}is-invalid{% endif %}" 
+                               value="{{ form.name.value|default:'' }}" required>
+                        <div class="form-text">Enter the name of the category.</div>
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'settings' %}" class="btn btn-outline-primary">Cancel</a>
+                        <button type="submit" class="btn btn-success">
+                            {% if form.instance.id %}
+                                Update Category
+                            {% else %}
+                                Add Category
+                            {% endif %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Tips</h5>
+            </div>
+            <div class="card-body">
+                <ul class="mb-0">
+                    <li>Use clear, descriptive names for categories.</li>
+                    <li>Examples: Entertainment, Hosting, Cloud, Utilities</li>
+                    <li>Categories help you organize and filter your subscriptions.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

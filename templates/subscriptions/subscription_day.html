@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ date_display }} - SubCal{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1>{{ date_display }}</h1>
+    </div>
+    <div class="col-auto">
+        <a href="{% url 'subscription-create' %}" class="btn btn-success">
+            <i class="bi bi-plus-circle"></i> Add Subscription
+        </a>
+    </div>
+</div>
+
+<div class="row mb-3">
+    <div class="col">
+        <div class="d-flex justify-content-between align-items-center">
+            <a href="{% url 'subscription-calendar' %}?month={{ month }}&year={{ year }}" class="btn btn-outline-primary">
+                <i class="bi bi-calendar"></i> Back to Calendar
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Subscriptions for {{ date_display }}</h5>
+            </div>
+            <div class="card-body">
+                {% if subscriptions %}
+                    <div class="list-group">
+                        {% for subscription in subscriptions %}
+                            <div class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h5 class="mb-1">{{ subscription.name }}</h5>
+                                    <small>{{ subscription.get_currency_symbol }}{{ subscription.cost }}</small>
+                                </div>
+                                <p class="mb-1">{{ subscription.get_renewal_period_display }} renewal</p>
+                                {% if subscription.notes %}
+                                    <small>{{ subscription.notes|linebreaks }}</small>
+                                {% endif %}
+                                <div class="mt-2">
+                                    <a href="{% url 'subscription-detail' subscription.id %}" class="btn btn-sm btn-outline-primary me-1">View</a>
+                                    <a href="{% url 'subscription-update' subscription.id %}" class="btn btn-sm btn-primary me-1">Edit</a>
+                                    <a href="{% url 'subscription-delete' subscription.id %}" class="btn btn-sm btn-danger">Delete</a>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted">No subscriptions renew on this day.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{% url 'subscription-calendar' %}?month={{ month }}&year={{ year }}" class="btn btn-outline-primary">Back to Calendar</a>
+                    <a href="{% url 'subscription-list' %}" class="btn btn-outline-secondary">View All Subscriptions</a>
+                    <a href="{% url 'subscription-create' %}" class="btn btn-success">Add New Subscription</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

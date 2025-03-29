@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% block title %}Delete {{ subscription.name }} - SubCal{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-danger text-white">
+                <h5 class="card-title mb-0">Confirm Deletion</h5>
+            </div>
+            <div class="card-body">
+                <p class="card-text">
+                    Are you sure you want to delete the subscription <strong>"{{ subscription.name }}"</strong>?
+                </p>
+                <p class="card-text text-danger">
+                    This action cannot be undone.
+                </p>
+                
+                <div class="alert alert-secondary">
+                    <h6>Subscription Details:</h6>
+                    <ul class="mb-0">
+                        <li><strong>Cost:</strong> ${{ subscription.cost }}</li>
+                        <li><strong>Renewal Period:</strong> {{ subscription.get_renewal_period_display }}</li>
+                        <li><strong>Start Date:</strong> {{ subscription.start_date }}</li>
+                    </ul>
+                </div>
+                
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'subscription-detail' subscription.id %}" class="btn btn-outline-primary">Cancel</a>
+                        <button type="submit" class="btn btn-danger">Delete Subscription</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

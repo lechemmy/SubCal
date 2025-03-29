@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+
+{% block title %}Import Subscriptions - SubCal{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1>Import Subscriptions</h1>
+        <p class="lead">Select the subscriptions you want to import from the CSV file.</p>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">Subscriptions to Import</h5>
+                <div>
+                    <button type="button" class="btn btn-sm btn-outline-primary" id="selectAll">Select All</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" id="deselectAll">Deselect All</button>
+                </div>
+            </div>
+            <div class="card-body">
+                {% if subscriptions %}
+                <form method="post" action="{% url 'import-subscriptions-csv' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="from_preview" value="1">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Select</th>
+                                    <th>Name</th>
+                                    <th>Category</th>
+                                    <th>Cost</th>
+                                    <th>Currency</th>
+                                    <th>Renewal Period</th>
+                                    <th>Start Date</th>
+                                    <th>Notes</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for subscription in subscriptions %}
+                                <tr>
+                                    <td>
+                                        <div class="form-check">
+                                            <input class="form-check-input subscription-checkbox" type="checkbox" name="selected_subscriptions" value="{{ forloop.counter0 }}" id="subscription-{{ forloop.counter0 }}" checked>
+                                        </div>
+                                    </td>
+                                    <td>{{ subscription.name }}</td>
+                                    <td>{{ subscription.category|default:"-" }}</td>
+                                    <td>{{ subscription.cost }}</td>
+                                    <td>{{ subscription.currency }}</td>
+                                    <td>{{ subscription.renewal_period }}</td>
+                                    <td>{{ subscription.start_date|date:"Y-m-d" }}</td>
+                                    <td>{{ subscription.notes|default:"-" }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="mt-3">
+                        <button type="submit" name="import_selected" class="btn btn-primary">Import Selected</button>
+                        <button type="submit" name="import_all" class="btn btn-outline-primary">Import All</button>
+                        <a href="{% url 'settings' %}" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+                {% else %}
+                <p class="text-muted">No valid subscription data found in the CSV file.</p>
+                <a href="{% url 'settings' %}" class="btn btn-primary">Back to Settings</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const selectAllBtn = document.getElementById('selectAll');
+        const deselectAllBtn = document.getElementById('deselectAll');
+        const checkboxes = document.querySelectorAll('.subscription-checkbox');
+
+        selectAllBtn.addEventListener('click', function() {
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = true;
+            });
+        });
+
+        deselectAllBtn.addEventListener('click', function() {
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = false;
+            });
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+
+{% block title %}Delete {{ currency.code }} - SubCal{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1>Delete Currency</h1>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Are you sure you want to delete "{{ currency.code }} ({{ currency.symbol }})"?</h5>
+                
+                <p class="text-danger">
+                    <strong>Warning:</strong> This action cannot be undone. Any subscriptions using this currency will need to be updated to use a different currency.
+                </p>
+                
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'settings' %}" class="btn btn-outline-primary">Cancel</a>
+                        <button type="submit" class="btn btn-danger">Delete Currency</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Currency Details</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>Code:</strong> {{ currency.code }}</p>
+                <p><strong>Name:</strong> {{ currency.name }}</p>
+                <p><strong>Symbol:</strong> {{ currency.symbol }}</p>
+                <p><strong>Created:</strong> {{ currency.created_at|date:"F j, Y" }}</p>
+                <p><strong>Last Updated:</strong> {{ currency.updated_at|date:"F j, Y" }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

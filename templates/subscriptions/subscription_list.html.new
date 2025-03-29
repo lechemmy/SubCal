@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+
+{% block title %}SubCal - Subscriptions{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1>Your Subscriptions</h1>
+    </div>
+    <div class="col-auto">
+        <a href="{% url 'subscription-calendar' %}" class="btn btn-primary me-2">
+            <i class="bi bi-calendar"></i> Calendar View
+        </a>
+        <a href="{% url 'subscription-create' %}" class="btn btn-success">
+            <i class="bi bi-plus-circle"></i> Add Subscription
+        </a>
+    </div>
+</div>
+
+{% if subscriptions %}
+    <div class="row">
+        <div class="col">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Cost</th>
+                            <th>Renewal Period</th>
+                            <th>Start Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for subscription in subscriptions %}
+                            <tr>
+                                <td>
+                                    <a href="{% url 'subscription-detail' subscription.id %}" class="text-decoration-none" style="color: var(--dark-primary);">
+                                        {{ subscription.name }}
+                                    </a>
+                                </td>
+                                <td>${{ subscription.cost }}</td>
+                                <td>{{ subscription.get_renewal_period_display }}</td>
+                                <td>{{ subscription.start_date }}</td>
+                                <td>
+                                    <a href="{% url 'subscription-update' subscription.id %}" class="btn btn-sm btn-primary me-1">Edit</a>
+                                    <a href="{% url 'subscription-delete' subscription.id %}" class="btn btn-sm btn-danger">Delete</a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+{% else %}
+    <div class="row">
+        <div class="col">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h5 class="card-title">No subscriptions found</h5>
+                    <p class="card-text">You haven't added any subscriptions yet.</p>
+                    <a href="{% url 'subscription-create' %}" class="btn btn-success">Add Your First Subscription</a>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endif %}
+{% endblock %}

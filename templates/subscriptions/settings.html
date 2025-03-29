@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+
+{% block title %}Settings - SubCal{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1>Settings</h1>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">Subscription Data Management</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Export Subscriptions</h6>
+                        <p class="text-muted">Export all your subscriptions to a CSV file.</p>
+                        <a href="{% url 'export-subscriptions-csv' %}" class="btn btn-primary">Export to CSV</a>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Import Subscriptions</h6>
+                        <p class="text-muted">Import subscriptions from a CSV file.</p>
+                        <form method="post" action="{% url 'import-subscriptions-csv' %}" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            <div class="mb-3">
+                                <input type="file" name="csv_file" class="form-control" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Preview Import</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">Categories</h5>
+                <a href="{% url 'category-create' %}" class="btn btn-sm btn-success">Add Category</a>
+            </div>
+            <div class="card-body">
+                {% if categories %}
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for category in categories %}
+                                <tr>
+                                    <td>{{ category.name }}</td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="{% url 'category-update' category.id %}" class="btn btn-outline-primary">Edit</a>
+                                            <a href="{% url 'category-delete' category.id %}" class="btn btn-outline-danger">Delete</a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-muted">No categories have been created yet.</p>
+                    <p>
+                        <a href="{% url 'category-create' %}" class="btn btn-primary">Create First Category</a>
+                    </p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">Currencies</h5>
+                <a href="{% url 'currency-create' %}" class="btn btn-sm btn-success">Add Currency</a>
+            </div>
+            <div class="card-body">
+                {% if currencies %}
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Code</th>
+                                    <th>Name</th>
+                                    <th>Symbol</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for currency in currencies %}
+                                <tr>
+                                    <td>{{ currency.code }}</td>
+                                    <td>{{ currency.name }}</td>
+                                    <td>{{ currency.symbol }}</td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="{% url 'currency-update' currency.id %}" class="btn btn-outline-primary">Edit</a>
+                                            <a href="{% url 'currency-delete' currency.id %}" class="btn btn-outline-danger">Delete</a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-muted">No currencies have been created yet.</p>
+                    <p>
+                        <a href="{% url 'currency-create' %}" class="btn btn-primary">Create First Currency</a>
+                    </p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

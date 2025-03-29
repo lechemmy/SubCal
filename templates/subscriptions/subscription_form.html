@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    {% if form.instance.id %}
+        Edit {{ form.instance.name }} - SubCal
+    {% else %}
+        Add New Subscription - SubCal
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1>
+            {% if form.instance.id %}
+                Edit Subscription
+            {% else %}
+                Add New Subscription
+            {% endif %}
+        </h1>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <form method="post" novalidate>
+                    {% csrf_token %}
+
+                    <div class="mb-3">
+                        <label for="{{ form.name.id_for_label }}" class="form-label">Name</label>
+                        {{ form.name.errors }}
+                        <input type="text" name="{{ form.name.name }}" id="{{ form.name.id_for_label }}" 
+                               class="form-control {% if form.name.errors %}is-invalid{% endif %}" 
+                               value="{{ form.name.value|default:'' }}" required>
+                        <div class="form-text">Enter the name of the subscription service.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.category.id_for_label }}" class="form-label">Category</label>
+                        {{ form.category.errors }}
+                        <select name="{{ form.category.name }}" id="{{ form.category.id_for_label }}" 
+                                class="form-select {% if form.category.errors %}is-invalid{% endif %}">
+                            <option value="">-- Select Category --</option>
+                            {% for category in form.fields.category.queryset %}
+                                <option value="{{ category.id }}" {% if form.category.value|stringformat:'s' == category.id|stringformat:'s' %}selected{% endif %}>
+                                    {{ category.name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                        <div class="form-text">Select the category for this subscription (optional).</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.currency.id_for_label }}" class="form-label">Currency</label>
+                        {{ form.currency.errors }}
+                        <select name="{{ form.currency.name }}" id="{{ form.currency.id_for_label }}" 
+                                class="form-select {% if form.currency.errors %}is-invalid{% endif %}" required>
+                            {% for value, text in form.fields.currency.choices %}
+                                <option value="{{ value }}" {% if form.currency.value == value %}selected{% endif %}>
+                                    {{ text }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                        <div class="form-text">Select the currency for this subscription.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.cost.id_for_label }}" class="form-label">Cost</label>
+                        {{ form.cost.errors }}
+                        <input type="number" name="{{ form.cost.name }}" id="{{ form.cost.id_for_label }}" 
+                               class="form-control {% if form.cost.errors %}is-invalid{% endif %}" 
+                               value="{{ form.cost.value|default:'' }}" step="0.01" min="0" required>
+                        <div class="form-text">Enter the cost of the subscription.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.renewal_period.id_for_label }}" class="form-label">Renewal Period</label>
+                        {{ form.renewal_period.errors }}
+                        <select name="{{ form.renewal_period.name }}" id="{{ form.renewal_period.id_for_label }}" 
+                                class="form-select {% if form.renewal_period.errors %}is-invalid{% endif %}" required>
+                            {% for value, text in form.fields.renewal_period.choices %}
+                                <option value="{{ value }}" {% if form.renewal_period.value == value %}selected{% endif %}>
+                                    {{ text }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                        <div class="form-text">Select how often the subscription renews.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.start_date.id_for_label }}" class="form-label">Start Date</label>
+                        {{ form.start_date.errors }}
+                        <input type="date" name="{{ form.start_date.name }}" id="{{ form.start_date.id_for_label }}" 
+                               class="form-control {% if form.start_date.errors %}is-invalid{% endif %}" 
+                               value="{{ form.start_date.value|date:'Y-m-d'|default:'' }}" required>
+                        <div class="form-text">Enter the date when the subscription started or will start.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.notes.id_for_label }}" class="form-label">Notes</label>
+                        {{ form.notes.errors }}
+                        <textarea name="{{ form.notes.name }}" id="{{ form.notes.id_for_label }}" 
+                                  class="form-control {% if form.notes.errors %}is-invalid{% endif %}" 
+                                  rows="4">{{ form.notes.value|default:'' }}</textarea>
+                        <div class="form-text">Optional notes about the subscription.</div>
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'subscription-list' %}" class="btn btn-outline-primary">Cancel</a>
+                        <button type="submit" class="btn btn-success">
+                            {% if form.instance.id %}
+                                Update Subscription
+                            {% else %}
+                                Add Subscription
+                            {% endif %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Tips</h5>
+            </div>
+            <div class="card-body">
+                <ul class="mb-0">
+                    <li>Enter the exact name of the subscription service.</li>
+                    <li>For monthly subscriptions, enter the monthly cost.</li>
+                    <li>For yearly subscriptions, enter the yearly cost.</li>
+                    <li>Use the notes field to record account details or other important information.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

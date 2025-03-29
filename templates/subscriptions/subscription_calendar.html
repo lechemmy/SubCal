@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+{% load subscription_extras %}
+
+{% block title %}SubCal - Calendar View{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1>Subscription Calendar</h1>
+        <h2 class="text-muted">{{ month_name }} {{ year }}</h2>
+    </div>
+    <div class="col-auto">
+        <a href="{% url 'subscription-list' %}" class="btn btn-primary me-2">
+            <i class="bi bi-list"></i> List View
+        </a>
+        <a href="{% url 'subscription-create' %}" class="btn btn-success">
+            <i class="bi bi-plus-circle"></i> Add Subscription
+        </a>
+    </div>
+</div>
+
+<div class="row mb-3">
+    <div class="col-md-4 mb-3">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Quick Navigation</h5>
+            </div>
+            <div class="card-body">
+                <form method="get" class="row g-3">
+                    <div class="col-md-6">
+                        <label for="month" class="form-label">Month</label>
+                        <select name="month" id="month" class="form-select">
+                            {% for i in "123456789101"|make_list %}
+                                <option value="{{ forloop.counter }}" {% if forloop.counter == month %}selected{% endif %}>
+                                    {{ forloop.counter|stringformat:"02d" }} - {{ forloop.counter|month_name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="year" class="form-label">Year</label>
+                        <select name="year" id="year" class="form-select">
+                            {% for i in "012345678910"|make_list %}
+                                {% with year_option=current_year|add:forloop.counter|add:-5 %}
+                                    <option value="{{ year_option }}" {% if year_option == year %}selected{% endif %}>
+                                        {{ year_option }}
+                                    </option>
+                                {% endwith %}
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-primary w-100">Go to Date</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-8 mb-3">
+        <div class="d-flex justify-content-between align-items-center">
+            <a href="?month={{ prev_month }}&year={{ prev_year }}" class="btn btn-outline-primary">
+                &laquo; Previous Month
+            </a>
+            <a href="{% url 'subscription-calendar' %}" class="btn btn-outline-secondary">
+                Current Month
+            </a>
+            <a href="?month={{ next_month }}&year={{ next_year }}" class="btn btn-outline-primary">
+                Next Month &raquo;
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col">
+        <div class="table-responsive">
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th class="text-center">Monday</th>
+                        <th class="text-center">Tuesday</th>
+                        <th class="text-center">Wednesday</th>
+                        <th class="text-center">Thursday</th>
+                        <th class="text-center">Friday</th>
+                        <th class="text-center">Saturday</th>
+                        <th class="text-center">Sunday</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for week in calendar %}
+                        <tr style="height: 120px;">
+                            {% for day in week %}
+                                {% if day != 0 %}
+                                    <td class="position-relative" style="width: 14.28%; min-width: 120px; padding: 0.5rem; cursor: pointer;" onclick="window.location.href='{% url 'subscription-day' year month day %}'">
+                                        <div class="d-flex justify-content-end">
+                                            <span class="badge bg-secondary">{{ day }}</span>
+                                        </div>
+                                        {% if day in calendar_data and calendar_data|get_item:day %}
+                                            <div class="mt-2">
+                                                {% for subscription in calendar_data|get_item:day %}
+                                                    <a href="{% url 'subscription-detail' subscription.id %}" class="text-decoration-none text-dark">
+                                                        <div class="card mb-1 subscription-card" style="background-color: var(--dark-primary); color: #000;">
+                                                            <div class="card-body p-2">
+                                                                <h6 class="card-title mb-1">
+                                                                    {{ subscription.name }}
+                                                                </h6>
+                                                                <p class="card-text mb-0 small">{{ subscription.get_currency_symbol }}{{ subscription.cost }} ({{ subscription.get_renewal_period_display }})</p>
+                                                            </div>
+                                                        </div>
+                                                    </a>
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </td>
+                                {% else %}
+                                    <td class="bg-secondary bg-opacity-25"></td>
+                                {% endif %}
+                            {% endfor %}
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
