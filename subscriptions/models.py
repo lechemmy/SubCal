@@ -18,8 +18,15 @@ class Currency(models.Model):
     code = models.CharField(max_length=3, unique=True)
     name = models.CharField(max_length=100)
     symbol = models.CharField(max_length=1)
+    is_default = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    def save(self, *args, **kwargs):
+        # If this currency is being set as default, unset any other default currencies
+        if self.is_default:
+            Currency.objects.filter(is_default=True).exclude(pk=self.pk).update(is_default=False)
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.code} ({self.symbol})"

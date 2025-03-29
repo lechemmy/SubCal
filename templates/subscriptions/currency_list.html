@@ -25,6 +25,7 @@
                                     <th>Code</th>
                                     <th>Name</th>
                                     <th>Symbol</th>
+                                    <th>Default</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -35,9 +36,19 @@
                                     <td>{{ currency.name }}</td>
                                     <td>{{ currency.symbol }}</td>
                                     <td>
+                                        {% if currency.is_default %}
+                                            <span class="badge bg-success">Default</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">No</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
                                         <div class="btn-group btn-group-sm">
                                             <a href="{% url 'currency-update' currency.id %}" class="btn btn-outline-primary">Edit</a>
                                             <a href="{% url 'currency-delete' currency.id %}" class="btn btn-outline-danger">Delete</a>
+                                            {% if not currency.is_default %}
+                                                <a href="{% url 'currency-set-default' currency.id %}" class="btn btn-outline-success">Set as Default</a>
+                                            {% endif %}
                                         </div>
                                     </td>
                                 </tr>

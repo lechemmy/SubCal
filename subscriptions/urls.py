@@ -23,6 +23,7 @@ urlpatterns = [
     path('currencies/new/', views.CurrencyCreateView.as_view(), name='currency-create'),
     path('currencies/<int:pk>/update/', views.CurrencyUpdateView.as_view(), name='currency-update'),
     path('currencies/<int:pk>/delete/', views.CurrencyDeleteView.as_view(), name='currency-delete'),
+    path('currencies/<int:pk>/set-default/', views.set_currency_default, name='currency-set-default'),
 
     # CSV export/import
     path('subscriptions/export/csv/', views.export_subscriptions_csv, name='export-subscriptions-csv'),

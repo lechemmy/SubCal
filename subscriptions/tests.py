@@ -51,8 +51,32 @@ class CurrencyModelTest(TestCase):
         self.assertEqual(self.currency.code, "USD")
         self.assertEqual(self.currency.name, "US Dollar")
         self.assertEqual(self.currency.symbol, "$")
+        self.assertFalse(self.currency.is_default)  # Default should be False by default
         self.assertTrue(isinstance(self.currency, Currency))
         self.assertEqual(str(self.currency), "USD ($)")
+
+    def test_currency_default(self):
+        """Test that a currency can be set as default."""
+        self.currency.is_default = True
+        self.currency.save()
+        self.assertTrue(self.currency.is_default)
+
+        # Create another currency and set it as default
+        currency2 = Currency.objects.create(
+            code="EUR",
+            name="Euro",
+            symbol="€",
+            is_default=True
+        )
+
+        # Refresh the first currency from the database
+        self.currency.refresh_from_db()
+
+        # The first currency should no longer be default
+        self.assertFalse(self.currency.is_default)
+
+        # The second currency should be default
+        self.assertTrue(currency2.is_default)
 
     def test_currency_unique_code(self):
         """Test that currency codes must be unique."""
@@ -296,6 +320,12 @@ class SubscriptionCreateViewTest(TestCase):
         self.client = Client()
         self.url = reverse('subscription-create')
         self.category = Category.objects.create(name="Entertainment")
+        self.currency = Currency.objects.create(
+            code="EUR",
+            name="Euro",
+            symbol="€",
+            is_default=True
+        )
 
     def test_subscription_create_view_status_code(self):
         """Test that the subscription create view returns a 200 status code."""
@@ -326,6 +356,40 @@ class SubscriptionCreateViewTest(TestCase):
         self.assertEqual(subscription.category, self.category)
         self.assertEqual(float(subscription.cost), 7.99)
         self.assertEqual(subscription.notes, 'Family subscription')
+
+    def test_subscription_create_view_default_currency(self):
+        """Test that the subscription create view uses the default currency."""
+        # Get the form
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+
+        # Check that the default currency is pre-selected
+        form = response.context['form']
+        self.assertEqual(form.fields['currency'].initial, 'EUR')
+
+        # Create a subscription without specifying the currency
+        data = {
+            'name': 'Disney+',
+            'category': self.category.pk,
+            'cost': 7.99,
+            'renewal_period': 'monthly',
+            'start_date': '2023-01-01',
+            'notes': 'Family subscription'
+        }
+        response = self.client.post(self.url, data)
+
+        # The form should require the currency field, so this should fail
+        self.assertEqual(response.status_code, 200)  # Form validation error
+
+        # Add the default currency to the data
+        data['currency'] = 'EUR'
+        response = self.client.post(self.url, data)
+
+        # Now it should succeed
+        self.assertEqual(response.status_code, 302)  # Redirect after successful creation
+        self.assertEqual(Subscription.objects.count(), 1)
+        subscription = Subscription.objects.first()
+        self.assertEqual(subscription.currency, 'EUR')
 
 
 class SubscriptionUpdateViewTest(TestCase):
@@ -649,7 +713,8 @@ class CurrencyViewsTest(TestCase):
         data = {
             'code': 'EUR',
             'name': 'Euro',
-            'symbol': '€'
+            'symbol': '€',
+            'is_default': False
         }
         response = self.client.post(self.create_url, data)
         self.assertEqual(response.status_code, 302)  # Redirect after successful creation
@@ -660,6 +725,25 @@ class CurrencyViewsTest(TestCase):
         messages = list(get_messages(response.wsgi_request))
         self.assertEqual(len(messages), 1)
         self.assertIn('EUR created successfully', str(messages[0]))
+
+    def test_currency_create_view_post_with_default(self):
+        """Test creating a currency and setting it as default."""
+        data = {
+            'code': 'EUR',
+            'name': 'Euro',
+            'symbol': '€',
+            'is_default': True
+        }
+        response = self.client.post(self.create_url, data)
+        self.assertEqual(response.status_code, 302)  # Redirect after successful creation
+
+        # Check that the new currency is set as default
+        eur = Currency.objects.get(code='EUR')
+        self.assertTrue(eur.is_default)
+
+        # Check that the old currency is no longer default
+        self.currency.refresh_from_db()
+        self.assertFalse(self.currency.is_default)
 
     def test_currency_update_view_get(self):
         """Test the GET request to the currency update view."""
@@ -672,17 +756,47 @@ class CurrencyViewsTest(TestCase):
         data = {
             'code': 'USD',
             'name': 'United States Dollar',
-            'symbol': '$'
+            'symbol': '$',
+            'is_default': False
         }
         response = self.client.post(self.update_url, data)
         self.assertEqual(response.status_code, 302)  # Redirect after successful update
         self.currency.refresh_from_db()
         self.assertEqual(self.currency.name, 'United States Dollar')
+        self.assertFalse(self.currency.is_default)
 
         # Test for success message
         messages = list(get_messages(response.wsgi_request))
         self.assertEqual(len(messages), 1)
         self.assertIn('USD updated successfully', str(messages[0]))
+
+    def test_currency_update_view_post_with_default(self):
+        """Test updating a currency and setting it as default."""
+        # Create another currency
+        currency2 = Currency.objects.create(
+            code="EUR",
+            name="Euro",
+            symbol="€",
+            is_default=True
+        )
+
+        # Update the first currency to be default
+        data = {
+            'code': 'USD',
+            'name': 'United States Dollar',
+            'symbol': '$',
+            'is_default': True
+        }
+        response = self.client.post(self.update_url, data)
+        self.assertEqual(response.status_code, 302)  # Redirect after successful update
+
+        # Check that the updated currency is set as default
+        self.currency.refresh_from_db()
+        self.assertTrue(self.currency.is_default)
+
+        # Check that the other currency is no longer default
+        currency2.refresh_from_db()
+        self.assertFalse(currency2.is_default)
 
     def test_currency_delete_view_get(self):
         """Test the GET request to the currency delete view."""

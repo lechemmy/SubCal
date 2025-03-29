@@ -84,11 +84,27 @@ class SubscriptionCreateView(CreateView):
     fields = ['name', 'category', 'cost', 'currency', 'renewal_period', 'start_date', 'notes']
     success_url = reverse_lazy('subscription-list')
 
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        form.fields['category'].queryset = Category.objects.all().order_by('name')
+
+        # Set default currency if one exists
+        default_currency = Currency.objects.filter(is_default=True).first()
+        if default_currency:
+            form.fields['currency'].initial = default_currency.code
+
+        return form
+
 class SubscriptionUpdateView(UpdateView):
     model = Subscription
     template_name = 'subscriptions/subscription_form.html'
     fields = ['name', 'category', 'cost', 'currency', 'renewal_period', 'start_date', 'notes']
     success_url = reverse_lazy('subscription-list')
+
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        form.fields['category'].queryset = Category.objects.all().order_by('name')
+        return form
 
 class SubscriptionDeleteView(DeleteView):
     model = Subscription
@@ -300,10 +316,13 @@ class CurrencyListView(ListView):
 class CurrencyCreateView(CreateView):
     model = Currency
     template_name = 'subscriptions/currency_form.html'
-    fields = ['code', 'name', 'symbol']
+    fields = ['code', 'name', 'symbol', 'is_default']
     success_url = reverse_lazy('settings')
 
     def form_valid(self, form):
+        # If this currency is set as default, unset any other default currencies
+        if form.instance.is_default:
+            Currency.objects.filter(is_default=True).update(is_default=False)
         messages.success(self.request, f'Currency {form.instance.code} created successfully!')
         return super().form_valid(form)
 
@@ -311,10 +330,13 @@ class CurrencyCreateView(CreateView):
 class CurrencyUpdateView(UpdateView):
     model = Currency
     template_name = 'subscriptions/currency_form.html'
-    fields = ['code', 'name', 'symbol']
+    fields = ['code', 'name', 'symbol', 'is_default']
     success_url = reverse_lazy('settings')
 
     def form_valid(self, form):
+        # If this currency is set as default, unset any other default currencies
+        if form.instance.is_default:
+            Currency.objects.filter(is_default=True).exclude(pk=form.instance.pk).update(is_default=False)
         messages.success(self.request, f'Currency {form.instance.code} updated successfully!')
         return super().form_valid(form)
 
@@ -331,6 +353,22 @@ class CurrencyDeleteView(DeleteView):
         result = super().delete(request, *args, **kwargs)
         messages.success(request, f'Currency {code} deleted successfully!')
         return result
+
+
+def set_currency_default(request, pk):
+    """
+    Set a currency as the default currency.
+    """
+    currency = Currency.objects.get(pk=pk)
+    currency.is_default = True
+    currency.save()
+    messages.success(request, f'Currency {currency.code} set as default successfully!')
+
+    # Redirect back to the referring page, or to settings if no referrer
+    referer = request.META.get('HTTP_REFERER')
+    if referer and 'currencies' in referer:
+        return redirect('currency-list')
+    return redirect('settings')
 
 
 def export_subscriptions_csv(request):
