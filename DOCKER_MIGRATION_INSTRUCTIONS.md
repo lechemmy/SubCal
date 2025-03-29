@@ -77,6 +77,8 @@ services:
     build: .
     command: >
       bash -c "python manage.py migrate &&
+               python create_default_categories.py &&
+               python create_default_currencies.py &&
                gunicorn --bind 0.0.0.0:8000 SubCal.wsgi:application"
     # ... rest of your configuration
 ```

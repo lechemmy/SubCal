@@ -14,6 +14,11 @@ services:
       - DEBUG=False
       - SECRET_KEY=${SECRET_KEY:-your-production-secret-key-here}
       - DATABASE_DIR=/app/data
+    command: >
+      bash -c "python manage.py migrate &&
+               python create_default_categories.py &&
+               python create_default_currencies.py &&
+               gunicorn --bind 0.0.0.0:8000 SubCal.wsgi:application"
     restart: unless-stopped
 
 volumes:
