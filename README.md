@@ -99,6 +99,22 @@ You can also override this setting when starting the container:
 ALLOWED_HOSTS=yourdomain.com docker-compose up -d
 ```
 
+#### Understanding Docker Networking
+
+When running SubCal in Docker, you might notice that the Docker container has a different IP address than your host machine (e.g., your Raspberry Pi). For example, if your Pi has an IP address of 192.168.35.7, the Docker container might have an IP address like 192.168.96.2.
+
+This is normal and by design:
+
+1. **Docker creates its own network**: Docker sets up a virtual network for containers that's separate from your host network.
+2. **Network isolation**: This provides security benefits by isolating container traffic from the host.
+3. **Port mapping**: The application is still accessible from your host IP address through the mapped port (8001).
+
+To access the application:
+- From the same machine: http://localhost:8001/
+- From other devices on your network: http://[YOUR_PI_IP]:8001/ (e.g., http://192.168.35.7:8001/)
+
+The Docker container's internal IP address (192.168.96.2) is only used for communication between containers and isn't directly accessible from outside the Docker network.
+
 ## Environment Configuration
 
 SubCal uses environment variables for configuration, which can be set in a `.env` file at the project root. This allows for different configurations between development and production environments.
