@@ -24,10 +24,38 @@
                 <table class="table table-striped">
                     <thead>
                         <tr>
-                            <th>Name</th>
-                            <th>Cost</th>
-                            <th>Renewal Period</th>
-                            <th>Start Date</th>
+                            <th>
+                                <a href="?sort=name&direction={% if current_sort == 'name' and current_direction == 'asc' %}desc{% else %}asc{% endif %}" class="text-decoration-none">
+                                    Name
+                                    {% if current_sort == 'name' %}
+                                        <i class="bi bi-arrow-{% if current_direction == 'asc' %}up{% else %}down{% endif %}"></i>
+                                    {% endif %}
+                                </a>
+                            </th>
+                            <th>
+                                <a href="?sort=cost&direction={% if current_sort == 'cost' and current_direction == 'asc' %}desc{% else %}asc{% endif %}" class="text-decoration-none">
+                                    Cost
+                                    {% if current_sort == 'cost' %}
+                                        <i class="bi bi-arrow-{% if current_direction == 'asc' %}up{% else %}down{% endif %}"></i>
+                                    {% endif %}
+                                </a>
+                            </th>
+                            <th>
+                                <a href="?sort=renewal_period&direction={% if current_sort == 'renewal_period' and current_direction == 'asc' %}desc{% else %}asc{% endif %}" class="text-decoration-none">
+                                    Renewal Period
+                                    {% if current_sort == 'renewal_period' %}
+                                        <i class="bi bi-arrow-{% if current_direction == 'asc' %}up{% else %}down{% endif %}"></i>
+                                    {% endif %}
+                                </a>
+                            </th>
+                            <th>
+                                <a href="?sort=start_date&direction={% if current_sort == 'start_date' and current_direction == 'asc' %}desc{% else %}asc{% endif %}" class="text-decoration-none">
+                                    Start Date
+                                    {% if current_sort == 'start_date' %}
+                                        <i class="bi bi-arrow-{% if current_direction == 'asc' %}up{% else %}down{% endif %}"></i>
+                                    {% endif %}
+                                </a>
+                            </th>
                             <th>Actions</th>
                         </tr>
                     </thead>

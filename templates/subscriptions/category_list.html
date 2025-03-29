@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+
+{% block title %}Categories - SubCal{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1>Categories</h1>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">Categories</h5>
+                <a href="{% url 'category-create' %}" class="btn btn-sm btn-success">Add Category</a>
+            </div>
+            <div class="card-body">
+                {% if categories %}
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for category in categories %}
+                                <tr>
+                                    <td>{{ category.name }}</td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="{% url 'category-update' category.id %}" class="btn btn-outline-primary">Edit</a>
+                                            <a href="{% url 'category-delete' category.id %}" class="btn btn-outline-danger">Delete</a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-muted">No categories have been created yet.</p>
+                    <p>
+                        <a href="{% url 'category-create' %}" class="btn btn-primary">Create First Category</a>
+                    </p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col">
+        <a href="{% url 'settings' %}" class="btn btn-secondary">Back to Settings</a>
+    </div>
+</div>
+{% endblock %}

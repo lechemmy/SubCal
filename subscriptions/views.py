@@ -15,10 +15,35 @@ class SubscriptionListView(ListView):
     model = Subscription
     template_name = 'subscriptions/subscription_list.html'
     context_object_name = 'subscriptions'
-    ordering = ['name']
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+
+        # Get sort parameters from request
+        sort_by = self.request.GET.get('sort', 'name')
+        direction = self.request.GET.get('direction', 'asc')
+
+        # Map frontend field names to model field names if needed
+        field_mapping = {
+            'name': 'name',
+            'cost': 'cost',
+            'renewal_period': 'renewal_period',
+            'start_date': 'start_date'
+        }
+
+        # Apply ordering
+        order_field = field_mapping.get(sort_by, 'name')
+        if direction == 'desc':
+            order_field = f'-{order_field}'
+
+        return queryset.order_by(order_field)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+
+        # Get current sort parameters to pass to template
+        context['current_sort'] = self.request.GET.get('sort', 'name')
+        context['current_direction'] = self.request.GET.get('direction', 'asc')
 
         # Calculate annual cost for each subscription and group by currency
         annual_totals = {}
@@ -209,8 +234,10 @@ class CategoryDeleteView(DeleteView):
 
     def delete(self, request, *args, **kwargs):
         category = self.get_object()
-        messages.success(request, f'Category {category.name} deleted successfully!')
-        return super().delete(request, *args, **kwargs)
+        name = category.name
+        result = super().delete(request, *args, **kwargs)
+        messages.success(request, f'Category {name} deleted successfully!')
+        return result
 
 
 class CurrencyListView(ListView):
@@ -250,8 +277,10 @@ class CurrencyDeleteView(DeleteView):
 
     def delete(self, request, *args, **kwargs):
         currency = self.get_object()
-        messages.success(request, f'Currency {currency.code} deleted successfully!')
-        return super().delete(request, *args, **kwargs)
+        code = currency.code
+        result = super().delete(request, *args, **kwargs)
+        messages.success(request, f'Currency {code} deleted successfully!')
+        return result
 
 
 def export_subscriptions_csv(request):

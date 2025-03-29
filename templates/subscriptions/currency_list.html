@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+
+{% block title %}Currencies - SubCal{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1>Currencies</h1>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">Currencies</h5>
+                <a href="{% url 'currency-create' %}" class="btn btn-sm btn-success">Add Currency</a>
+            </div>
+            <div class="card-body">
+                {% if currencies %}
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Code</th>
+                                    <th>Name</th>
+                                    <th>Symbol</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for currency in currencies %}
+                                <tr>
+                                    <td>{{ currency.code }}</td>
+                                    <td>{{ currency.name }}</td>
+                                    <td>{{ currency.symbol }}</td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="{% url 'currency-update' currency.id %}" class="btn btn-outline-primary">Edit</a>
+                                            <a href="{% url 'currency-delete' currency.id %}" class="btn btn-outline-danger">Delete</a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-muted">No currencies have been created yet.</p>
+                    <p>
+                        <a href="{% url 'currency-create' %}" class="btn btn-primary">Create First Currency</a>
+                    </p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col">
+        <a href="{% url 'settings' %}" class="btn btn-secondary">Back to Settings</a>
+    </div>
+</div>
+{% endblock %}
