@@ -1,3 +1,5 @@
+# This is an AI project written by Junie in PyCharm. It should work but the docker install currently may have errors. 
+
 # SubCal - Subscription Calendar Manager
 
 SubCal is a web application built with Django that helps you track and manage your subscriptions. Keep tabs on your recurring payments, view them in a calendar format, and never miss a renewal date again.
