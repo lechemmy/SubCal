@@ -54,6 +54,51 @@
 </div>
 
 <div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Spending by Subscription</h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted mb-4">
+                    This analysis shows your annual spending for each subscription, sorted by cost (highest first). 
+                    The table below provides a breakdown of how much you spend on each subscription annually, 
+                    with costs converted to GBP for easy comparison.
+                </p>
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Subscription</th>
+                                <th>Category</th>
+                                <th>Renewal Period</th>
+                                <th>Annual Cost</th>
+                                <th>GBP Cost</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for sub in subscription_spending %}
+                                <tr>
+                                    <td>{{ sub.name }}</td>
+                                    <td>{{ sub.category }}</td>
+                                    <td>{{ sub.renewal_period }}</td>
+                                    <td>{{ sub.symbol }}{{ sub.annual_cost|floatformat:2 }}</td>
+                                    <td>£{{ sub.gbp_cost|floatformat:2 }}</td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="5" class="text-center">No subscriptions found</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
     <div class="col-md-6">
         <div class="card">
             <div class="card-header">

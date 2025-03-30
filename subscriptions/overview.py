@@ -42,6 +42,10 @@ class OverviewView(TemplateView):
         currency_spending = self.calculate_currency_spending(subscriptions, exchange_rates)
         context['currency_spending'] = currency_spending
 
+        # Calculate spending by subscription
+        subscription_spending = self.calculate_subscription_spending(subscriptions, exchange_rates)
+        context['subscription_spending'] = subscription_spending
+
         # Calculate monthly billed costs for bar graph (only subscriptions billed in that month)
         monthly_billed_costs = self.calculate_monthly_billed_costs(subscriptions, exchange_rates, selected_year)
         context['monthly_billed_costs'] = monthly_billed_costs
@@ -348,3 +352,38 @@ class OverviewView(TemplateView):
             return cost / 24  # 2 years = 24 months
         else:
             return cost  # Default to the cost as is
+
+    def calculate_subscription_spending(self, subscriptions, exchange_rates):
+        """Calculate spending by subscription with conversion to GBP"""
+        subscription_spending = []
+
+        for subscription in subscriptions:
+            # Get subscription details
+            name = subscription.name
+            category = subscription.category.name if subscription.category else 'Uncategorized'
+            currency = subscription.currency
+            symbol = subscription.get_currency_symbol()
+            renewal_period = subscription.get_renewal_period_display()
+
+            # Calculate annual cost
+            annual_cost = self.calculate_annual_cost(subscription)
+
+            # Convert to GBP
+            gbp_rate = exchange_rates.get(currency, 1.0)
+            gbp_cost = annual_cost * Decimal(str(gbp_rate))
+
+            # Add to subscription spending list
+            subscription_spending.append({
+                'name': name,
+                'category': category,
+                'annual_cost': annual_cost,
+                'currency': currency,
+                'symbol': symbol,
+                'renewal_period': renewal_period,
+                'gbp_cost': gbp_cost
+            })
+
+        # Sort by GBP cost (highest first)
+        subscription_spending.sort(key=lambda x: x['gbp_cost'], reverse=True)
+
+        return subscription_spending
