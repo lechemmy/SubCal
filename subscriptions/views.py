@@ -134,6 +134,11 @@ def calendar_view(request):
     year = int(request.GET.get('year', now.year))
     view_type = request.GET.get('view_type', 'month')  # Default to month view
 
+    # Get current day for highlighting in the calendar
+    current_day = now.day
+    current_month = now.month
+    current_year = now.year
+
     # Get all subscriptions
     subscriptions = Subscription.objects.all()
 
@@ -184,6 +189,9 @@ def calendar_view(request):
             'next_month': next_month,
             'next_year': next_year,
             'current_year': current_year,
+            'current_day': current_day,
+            'current_month': current_month,
+            'current_year': current_year,
             'view_type': view_type,
         }
     else:  # Year view
@@ -230,6 +238,9 @@ def calendar_view(request):
             'year': year,
             'prev_year': prev_year,
             'next_year': next_year,
+            'current_year': current_year,
+            'current_day': current_day,
+            'current_month': current_month,
             'current_year': current_year,
             'view_type': view_type,
         }

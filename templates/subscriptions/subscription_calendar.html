@@ -111,9 +111,9 @@
                         <tr style="height: 120px;">
                             {% for day in week %}
                                 {% if day != 0 %}
-                                    <td class="position-relative" style="width: 14.28%; min-width: 120px; padding: 0.5rem; cursor: pointer;" onclick="window.location.href='{% url 'subscription-day' year month day %}'">
+                                    <td class="position-relative {% if day == current_day and month == current_month and year == current_year %}bg-primary bg-opacity-25{% endif %}" style="width: 14.28%; min-width: 120px; padding: 0.5rem; cursor: pointer;" onclick="window.location.href='{% url 'subscription-day' year month day %}'">
                                         <div class="d-flex justify-content-end">
-                                            <span class="badge bg-secondary">{{ day }}</span>
+                                            <span class="badge {% if day == current_day and month == current_month and year == current_year %}bg-primary{% else %}bg-secondary{% endif %}">{{ day }}</span>
                                         </div>
                                         {% if day in calendar_data and calendar_data|get_item:day %}
                                             <div class="mt-2">
@@ -176,12 +176,12 @@
                                             <tr>
                                                 {% for day in week %}
                                                     {% if day != 0 %}
-                                                        <td class="text-center position-relative" style="cursor: pointer;" onclick="window.location.href='{% url 'subscription-day' year month_data.month_num day %}'" 
+                                                        <td class="text-center position-relative {% if day == current_day and month_data.month_num == current_month and year == current_year %}bg-primary bg-opacity-25{% endif %}" style="cursor: pointer;" onclick="window.location.href='{% url 'subscription-day' year month_data.month_num day %}'" 
                                                             {% if day in month_data.calendar_data and month_data.calendar_data|get_item:day %}
                                                                 title="{% for subscription in month_data.calendar_data|get_item:day %}{{ subscription.name }}{% if not forloop.last %}, {% endif %}{% endfor %}"
                                                                 data-bs-toggle="tooltip" data-bs-placement="top"
                                                             {% endif %}>
-                                                            <span class="small">{{ day }}</span>
+                                                            <span class="small {% if day == current_day and month_data.month_num == current_month and year == current_year %}text-primary fw-bold{% endif %}">{{ day }}</span>
                                                             {% if day in month_data.calendar_data and month_data.calendar_data|get_item:day %}
                                                                 <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
                                                                     {{ month_data.calendar_data|get_item:day|length }}
