@@ -1,4 +1,4 @@
-# This is an AI project written by Junie in PyCharm. It should work but the docker install currently may have errors. 
+# This is an AI project written by Junie in PyCharm. This Django project was written in one weekend. The design is lacking, as I let the AI create it without input from me. 
 
 # SubCal - Subscription Calendar Manager
 
