@@ -11,7 +11,7 @@ SubCal is a web application built with Django that helps you track and manage yo
 - **Day View**: Detailed view of subscriptions due on a specific day
 - **Categorization**: Organize subscriptions by custom categories
 - **Multi-Currency Support**: Track subscriptions in different currencies (USD, GBP, EUR)
-- **Flexible Renewal Periods**: Support for weekly, monthly, and yearly subscription cycles
+- **Flexible Renewal Periods**: Support for weekly, monthly, quarterly, yearly, and biennial subscription cycles
 
 ## Technologies Used
 
@@ -185,7 +185,7 @@ SubCal uses environment variables for configuration, which can be set in a `.env
    - Category (optional)
    - Cost
    - Currency
-   - Renewal period (weekly, monthly, yearly)
+   - Renewal period (weekly, monthly, quarterly, yearly, biennial)
    - Start date
    - Notes (optional)
 3. Click "Save" to add the subscription

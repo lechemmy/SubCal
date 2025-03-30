@@ -41,6 +41,7 @@ class Subscription(models.Model):
         ('monthly', 'Monthly'),
         ('quarterly', 'Quarterly'),
         ('yearly', 'Yearly'),
+        ('biennial', 'Biennial'),
     ]
 
     CURRENCY_CHOICES = [

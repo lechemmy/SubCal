@@ -87,6 +87,25 @@ def calculate_next_renewal_date(start_date, renewal_period, target_year, target_
             if renewal_date >= start_date:
                 renewal_dates.append(renewal_date)
 
+    elif renewal_period == 'biennial':
+        # For biennial, check if the start month is this month and if this is a biennial year
+        years_since_start = target_year - start_date.year
+        if start_date.month == target_month and years_since_start % 2 == 0:
+            day = start_date.day
+            # Get the last day of the target month
+            last_day = calendar.monthrange(target_year, target_month)[1]
+
+            # If the start day is greater than the last day of the target month,
+            # use the last day of the target month
+            if day > last_day:
+                renewal_date = datetime(target_year, target_month, last_day).date()
+            else:
+                renewal_date = datetime(target_year, target_month, day).date()
+
+            # Only add the renewal date if it's after the start date
+            if renewal_date >= start_date:
+                renewal_dates.append(renewal_date)
+
     return renewal_dates
 
 def is_renewal_date(subscription, check_date):
@@ -153,6 +172,24 @@ def is_renewal_date(subscription, check_date):
     elif renewal_period == 'yearly':
         # For yearly, check if the month and day match
         if start_date.month == check_date.month:
+            # Check if the day of the month matches
+            if start_date.day == check_date.day and check_date >= start_date:
+                return True
+
+            # Check if it's the last day of the month and the subscription's day doesn't exist in this month
+            last_day = calendar.monthrange(check_date.year, check_date.month)[1]
+            if check_date.day == last_day and check_date >= start_date:
+                # If the start day is greater than the last day of this month,
+                # this is a renewal date
+                if start_date.day > last_day:
+                    return True
+
+        return False
+
+    elif renewal_period == 'biennial':
+        # For biennial, check if the month and day match and if this is a biennial year
+        years_since_start = check_date.year - start_date.year
+        if years_since_start % 2 == 0 and start_date.month == check_date.month:
             # Check if the day of the month matches
             if start_date.day == check_date.day and check_date >= start_date:
                 return True

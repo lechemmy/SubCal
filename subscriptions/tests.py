@@ -161,7 +161,7 @@ class SubscriptionModelTest(TestCase):
     def test_subscription_renewal_choices(self):
         """Test the renewal period choices."""
         # Test valid choices
-        for choice in ['weekly', 'monthly', 'yearly']:
+        for choice in ['weekly', 'monthly', 'quarterly', 'yearly', 'biennial']:
             subscription = Subscription(
                 name=f"Test {choice}",
                 cost=9.99,
@@ -845,6 +845,14 @@ class UtilsTest(TestCase):
             renewal_period="yearly",
             start_date=date(2023, 1, 29)  # January 29th
         )
+        self.subscription_biennial = Subscription.objects.create(
+            name="Biennial on 28th",
+            category=self.category,
+            cost=199.99,
+            currency="USD",
+            renewal_period="biennial",
+            start_date=date(2023, 1, 28)  # January 28th
+        )
 
     def test_calculate_next_renewal_date_monthly(self):
         """Test calculate_next_renewal_date for monthly subscriptions."""
@@ -929,6 +937,40 @@ class UtilsTest(TestCase):
         self.assertEqual(len(renewal_dates), 1)
         self.assertEqual(renewal_dates[0], date(2024, 1, 29))
 
+    def test_calculate_next_renewal_date_biennial(self):
+        """Test calculate_next_renewal_date for biennial subscriptions."""
+        # January 28th subscription in January of the start year
+        # Should have a renewal date
+        renewal_dates = calculate_next_renewal_date(
+            self.subscription_biennial.start_date,
+            self.subscription_biennial.renewal_period,
+            2023,  # Start year
+            1      # January
+        )
+        self.assertEqual(len(renewal_dates), 1)
+        self.assertEqual(renewal_dates[0], date(2023, 1, 28))
+
+        # January 28th subscription in January of the next year
+        # Should not have a renewal date (not a biennial year)
+        renewal_dates = calculate_next_renewal_date(
+            self.subscription_biennial.start_date,
+            self.subscription_biennial.renewal_period,
+            2024,  # Next year (not a biennial year)
+            1      # January
+        )
+        self.assertEqual(len(renewal_dates), 0)
+
+        # January 28th subscription in January of the biennial year
+        # Should have a renewal date
+        renewal_dates = calculate_next_renewal_date(
+            self.subscription_biennial.start_date,
+            self.subscription_biennial.renewal_period,
+            2025,  # Biennial year (2 years after start)
+            1      # January
+        )
+        self.assertEqual(len(renewal_dates), 1)
+        self.assertEqual(renewal_dates[0], date(2025, 1, 28))
+
     def test_is_renewal_date(self):
         """Test is_renewal_date function."""
         # Monthly subscription on 30th
@@ -967,6 +1009,31 @@ class UtilsTest(TestCase):
         self.assertTrue(is_renewal_date(
             self.subscription_quarterly,
             date(2023, 7, 31)
+        ))
+
+        # Biennial subscription on 28th
+        # January 28th, 2023 is a renewal date (start year)
+        self.assertTrue(is_renewal_date(
+            self.subscription_biennial,
+            date(2023, 1, 28)
+        ))
+
+        # January 28th, 2024 is not a renewal date (not a biennial year)
+        self.assertFalse(is_renewal_date(
+            self.subscription_biennial,
+            date(2024, 1, 28)
+        ))
+
+        # January 28th, 2025 is a renewal date (biennial year)
+        self.assertTrue(is_renewal_date(
+            self.subscription_biennial,
+            date(2025, 1, 28)
+        ))
+
+        # February 28th, 2025 is not a renewal date (wrong month)
+        self.assertFalse(is_renewal_date(
+            self.subscription_biennial,
+            date(2025, 2, 28)
         ))
 
     def test_leap_year_edge_case(self):
