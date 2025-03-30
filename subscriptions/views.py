@@ -5,9 +5,14 @@ from .models import Subscription, Category, Currency
 from django.contrib import messages
 import calendar
 import io
+import requests
+import json
+from decimal import Decimal
 from datetime import datetime, timedelta, date
 from dateutil.relativedelta import relativedelta
 from django.http import HttpResponse
+from django.db.models.functions import Lower
+from django.db.models import Sum
 from .utils import calculate_next_renewal_date, is_renewal_date, generate_subscriptions_csv, parse_subscriptions_csv, generate_categories_csv, parse_categories_csv, generate_currencies_csv, parse_currencies_csv
 
 # Create your views here.
@@ -33,10 +38,17 @@ class SubscriptionListView(ListView):
 
         # Apply ordering
         order_field = field_mapping.get(sort_by, 'name')
-        if direction == 'desc':
-            order_field = f'-{order_field}'
 
-        return queryset.order_by(order_field)
+        # Use case-insensitive sorting for name field
+        if order_field == 'name':
+            if direction == 'desc':
+                return queryset.order_by(Lower(order_field).desc())
+            else:
+                return queryset.order_by(Lower(order_field))
+        else:
+            if direction == 'desc':
+                order_field = f'-{order_field}'
+            return queryset.order_by(order_field)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -86,7 +98,7 @@ class SubscriptionCreateView(CreateView):
 
     def get_form(self, form_class=None):
         form = super().get_form(form_class)
-        form.fields['category'].queryset = Category.objects.all().order_by('name')
+        form.fields['category'].queryset = Category.objects.all().order_by(Lower('name'))
 
         # Set default currency if one exists
         default_currency = Currency.objects.filter(is_default=True).first()
@@ -103,7 +115,7 @@ class SubscriptionUpdateView(UpdateView):
 
     def get_form(self, form_class=None):
         form = super().get_form(form_class)
-        form.fields['category'].queryset = Category.objects.all().order_by('name')
+        form.fields['category'].queryset = Category.objects.all().order_by(Lower('name'))
         return form
 
 class SubscriptionDeleteView(DeleteView):
@@ -258,7 +270,7 @@ class SettingsView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['categories'] = Category.objects.all().order_by('name')
+        context['categories'] = Category.objects.all().order_by(Lower('name'))
         context['currencies'] = Currency.objects.all().order_by('code')
         return context
 
@@ -267,7 +279,9 @@ class CategoryListView(ListView):
     model = Category
     template_name = 'subscriptions/category_list.html'
     context_object_name = 'categories'
-    ordering = ['name']
+
+    def get_queryset(self):
+        return Category.objects.all().order_by(Lower('name'))
 
 
 class CategoryCreateView(CreateView):
@@ -376,7 +390,7 @@ def export_subscriptions_csv(request):
     Export all subscriptions to a CSV file.
     """
     # Get all subscriptions
-    subscriptions = Subscription.objects.all().order_by('name')
+    subscriptions = Subscription.objects.all().order_by(Lower('name'))
 
     # Generate CSV data
     csv_data = generate_subscriptions_csv(subscriptions)
@@ -393,7 +407,7 @@ def export_categories_csv(request):
     Export all categories to a CSV file.
     """
     # Get all categories
-    categories = Category.objects.all().order_by('name')
+    categories = Category.objects.all().order_by(Lower('name'))
 
     # Generate CSV data
     csv_data = generate_categories_csv(categories)

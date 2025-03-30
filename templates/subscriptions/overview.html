@@ -1,0 +1,284 @@
+{% extends 'base.html' %}
+{% load custom_filters %}
+
+{% block title %}SubCal - Spending Overview{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1>Spending Overview</h1>
+    </div>
+    <div class="col-auto">
+        <a href="{% url 'subscription-list' %}" class="btn btn-primary me-2">
+            <i class="bi bi-list"></i> List View
+        </a>
+        <a href="{% url 'subscription-calendar' %}" class="btn btn-primary me-2">
+            <i class="bi bi-calendar"></i> Calendar View
+        </a>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">Monthly Billed Costs (in GBP) - {{ selected_year }}</h5>
+                <div class="btn-group">
+                    {% for year in years %}
+                        <a href="?year={{ year }}" class="btn btn-sm {% if year == selected_year %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                            {{ year }}
+                        </a>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="card-body">
+                <p class="text-muted">This graph shows only the cost of subscriptions that are billed in each month.</p>
+                <canvas id="monthlyBilledChart" height="100"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">Monthly Active Costs (in GBP) - {{ selected_year }}</h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted">This graph shows the cost of all active subscriptions in each month, regardless of when they are billed.</p>
+                <canvas id="monthlyChart" height="100"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Spending by Category</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Category</th>
+                                <th>Original Cost</th>
+                                <th>GBP Cost</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for category, data in category_spending.items %}
+                                <tr>
+                                    <td>{{ category }}</td>
+                                    <td>{{ data.original_currency }} {{ data.original_cost|floatformat:2 }}</td>
+                                    <td>£{{ data.gbp_cost|floatformat:2 }}</td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="3" class="text-center">No categories found</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Spending by Currency</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Currency</th>
+                                <th>Original Cost</th>
+                                <th>GBP Cost</th>
+                                <th>Exchange Rate</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for currency, data in currency_spending.items %}
+                                <tr>
+                                    <td>{{ currency }}</td>
+                                    <td>{{ data.symbol }}{{ data.original_cost|floatformat:2 }}</td>
+                                    <td>£{{ data.gbp_cost|floatformat:2 }}</td>
+                                    <td>{{ exchange_rates|get_item:currency|floatformat:4 }}</td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center">No currencies found</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Exchange Rates Information</h5>
+            </div>
+            <div class="card-body">
+                <p>All costs are converted to GBP using current exchange rates.</p>
+                <p>Exchange rates are fetched from <a href="https://www.exchangerate-api.com/" target="_blank">ExchangeRate-API</a>.</p>
+                <p>Last updated: {{ now|date:"F j, Y, g:i a" }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Get the canvas elements
+        var ctxBilled = document.getElementById('monthlyBilledChart').getContext('2d');
+        var ctxActive = document.getElementById('monthlyChart').getContext('2d');
+
+        // Prepare data for the billed costs chart
+        var labelsBilled = [];
+        var dataBilled = [];
+        var subscriptionsDataBilled = {};
+
+        {% for month_key, month_data in monthly_billed_costs.items %}
+            labelsBilled.push('{{ month_data.name }}');
+            dataBilled.push({{ month_data.gbp_cost|floatformat:2 }});
+
+            // Store subscription details for tooltip
+            subscriptionsDataBilled['{{ month_data.name }}'] = [
+                {% for sub in month_data.subscriptions %}
+                    {
+                        name: '{{ sub.name }}',
+                        cost: {{ sub.cost|floatformat:2 }},
+                        currency: '{{ sub.currency }}',
+                        symbol: '{{ sub.symbol }}',
+                        gbp_cost: {{ sub.gbp_cost|floatformat:2 }}
+                    },
+                {% endfor %}
+            ];
+        {% endfor %}
+
+        // Prepare data for the active costs chart
+        var labelsActive = [];
+        var dataActive = [];
+        var subscriptionsDataActive = {};
+
+        {% for month_key, month_data in monthly_costs.items %}
+            labelsActive.push('{{ month_data.name }}');
+            dataActive.push({{ month_data.gbp_cost|floatformat:2 }});
+
+            // Store subscription details for tooltip
+            subscriptionsDataActive['{{ month_data.name }}'] = [
+                {% for sub in month_data.subscriptions %}
+                    {
+                        name: '{{ sub.name }}',
+                        cost: {{ sub.cost|floatformat:2 }},
+                        currency: '{{ sub.currency }}',
+                        symbol: '{{ sub.symbol }}',
+                        gbp_cost: {{ sub.gbp_cost|floatformat:2 }}
+                    },
+                {% endfor %}
+            ];
+        {% endfor %}
+
+        // Create the tooltip callback functions
+        function createTooltipCallbacks(subscriptionsData) {
+            return {
+                title: function(context) {
+                    return context[0].label;
+                },
+                label: function(context) {
+                    return 'Total: £' + context.raw;
+                },
+                afterLabel: function(context) {
+                    var month = context.label;
+                    var subs = subscriptionsData[month];
+
+                    if (!subs || subs.length === 0) {
+                        return ['No subscriptions'];
+                    }
+
+                    // Sort subscriptions by cost (highest first)
+                    subs.sort(function(a, b) {
+                        return b.gbp_cost - a.gbp_cost;
+                    });
+
+                    var lines = ['', 'Subscriptions:'];
+
+                    for (var i = 0; i < subs.length; i++) {
+                        var sub = subs[i];
+                        lines.push(sub.name + ': ' + sub.symbol + sub.cost + ' (' + '£' + sub.gbp_cost + ')');
+                    }
+
+                    return lines;
+                }
+            };
+        }
+
+        // Create the chart options
+        function createChartOptions(subscriptionsData) {
+            return {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value, index, values) {
+                                return '£' + value;
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: createTooltipCallbacks(subscriptionsData)
+                    }
+                }
+            };
+        }
+
+        // Create the billed costs chart
+        var monthlyBilledChart = new Chart(ctxBilled, {
+            type: 'bar',
+            data: {
+                labels: labelsBilled,
+                datasets: [{
+                    label: 'Monthly Billed Cost (GBP)',
+                    data: dataBilled,
+                    backgroundColor: 'rgba(3, 218, 198, 0.5)',
+                    borderColor: 'rgba(3, 218, 198, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: createChartOptions(subscriptionsDataBilled)
+        });
+
+        // Create the active costs chart
+        var monthlyActiveChart = new Chart(ctxActive, {
+            type: 'bar',
+            data: {
+                labels: labelsActive,
+                datasets: [{
+                    label: 'Monthly Active Cost (GBP)',
+                    data: dataActive,
+                    backgroundColor: 'rgba(187, 134, 252, 0.5)',
+                    borderColor: 'rgba(187, 134, 252, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: createChartOptions(subscriptionsDataActive)
+        });
+    });
+</script>
+{% endblock %}

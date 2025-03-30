@@ -1,9 +1,11 @@
 from django.urls import path
 from . import views
+from .overview import OverviewView
 
 urlpatterns = [
     path('', views.home, name='home'),
     path('subscriptions/', views.SubscriptionListView.as_view(), name='subscription-list'),
+    path('overview/', OverviewView.as_view(), name='overview'),
     path('subscriptions/<int:pk>/', views.SubscriptionDetailView.as_view(), name='subscription-detail'),
     path('subscriptions/new/', views.SubscriptionCreateView.as_view(), name='subscription-create'),
     path('subscriptions/<int:pk>/update/', views.SubscriptionUpdateView.as_view(), name='subscription-update'),
