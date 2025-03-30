@@ -230,3 +230,105 @@ def parse_subscriptions_csv(csv_file):
         subscriptions.append(row)
 
     return subscriptions
+
+def generate_categories_csv(categories):
+    """
+    Generate a CSV file from a queryset of categories.
+
+    Args:
+        categories: A queryset of Category objects
+
+    Returns:
+        A string containing the CSV data
+    """
+    output = io.StringIO()
+    writer = csv.writer(output)
+
+    # Write header row
+    writer.writerow(['name'])
+
+    # Write data rows
+    for category in categories:
+        writer.writerow([category.name])
+
+    return output.getvalue()
+
+def parse_categories_csv(csv_file):
+    """
+    Parse a CSV file containing category data.
+
+    Args:
+        csv_file: A file-like object containing CSV data
+
+    Returns:
+        A list of dictionaries, each representing a category
+    """
+    reader = csv.DictReader(csv_file)
+    categories = []
+
+    for row in reader:
+        # Convert empty strings to None
+        for key, value in row.items():
+            if value == '':
+                row[key] = None
+
+        categories.append(row)
+
+    return categories
+
+def generate_currencies_csv(currencies):
+    """
+    Generate a CSV file from a queryset of currencies.
+
+    Args:
+        currencies: A queryset of Currency objects
+
+    Returns:
+        A string containing the CSV data
+    """
+    output = io.StringIO()
+    writer = csv.writer(output)
+
+    # Write header row
+    writer.writerow(['code', 'name', 'symbol', 'is_default'])
+
+    # Write data rows
+    for currency in currencies:
+        writer.writerow([
+            currency.code,
+            currency.name,
+            currency.symbol,
+            currency.is_default
+        ])
+
+    return output.getvalue()
+
+def parse_currencies_csv(csv_file):
+    """
+    Parse a CSV file containing currency data.
+
+    Args:
+        csv_file: A file-like object containing CSV data
+
+    Returns:
+        A list of dictionaries, each representing a currency
+    """
+    reader = csv.DictReader(csv_file)
+    currencies = []
+
+    for row in reader:
+        # Convert empty strings to None
+        for key, value in row.items():
+            if value == '':
+                row[key] = None
+
+        # Convert is_default to boolean
+        if 'is_default' in row:
+            if row['is_default'] in ['True', 'true', '1', 'yes', 'Yes']:
+                row['is_default'] = True
+            else:
+                row['is_default'] = False
+
+        currencies.append(row)
+
+    return currencies

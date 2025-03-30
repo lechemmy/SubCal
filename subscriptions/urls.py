@@ -28,4 +28,8 @@ urlpatterns = [
     # CSV export/import
     path('subscriptions/export/csv/', views.export_subscriptions_csv, name='export-subscriptions-csv'),
     path('subscriptions/import/csv/', views.import_subscriptions_csv, name='import-subscriptions-csv'),
+    path('categories/export/csv/', views.export_categories_csv, name='export-categories-csv'),
+    path('categories/import/csv/', views.import_categories_csv, name='import-categories-csv'),
+    path('currencies/export/csv/', views.export_currencies_csv, name='export-currencies-csv'),
+    path('currencies/import/csv/', views.import_currencies_csv, name='import-currencies-csv'),
 ]

@@ -8,7 +8,7 @@ import io
 from datetime import datetime, timedelta, date
 from dateutil.relativedelta import relativedelta
 from django.http import HttpResponse
-from .utils import calculate_next_renewal_date, is_renewal_date, generate_subscriptions_csv, parse_subscriptions_csv
+from .utils import calculate_next_renewal_date, is_renewal_date, generate_subscriptions_csv, parse_subscriptions_csv, generate_categories_csv, parse_categories_csv, generate_currencies_csv, parse_currencies_csv
 
 # Create your views here.
 class SubscriptionListView(ListView):
@@ -388,6 +388,40 @@ def export_subscriptions_csv(request):
     return response
 
 
+def export_categories_csv(request):
+    """
+    Export all categories to a CSV file.
+    """
+    # Get all categories
+    categories = Category.objects.all().order_by('name')
+
+    # Generate CSV data
+    csv_data = generate_categories_csv(categories)
+
+    # Create HTTP response with CSV data
+    response = HttpResponse(csv_data, content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="categories.csv"'
+
+    return response
+
+
+def export_currencies_csv(request):
+    """
+    Export all currencies to a CSV file.
+    """
+    # Get all currencies
+    currencies = Currency.objects.all().order_by('code')
+
+    # Generate CSV data
+    csv_data = generate_currencies_csv(currencies)
+
+    # Create HTTP response with CSV data
+    response = HttpResponse(csv_data, content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="currencies.csv"'
+
+    return response
+
+
 def import_subscriptions_csv(request):
     """
     Import subscriptions from a CSV file.
@@ -527,6 +561,266 @@ def import_subscriptions_csv(request):
                 # Show a preview of the subscriptions to import
                 return render(request, 'subscriptions/import_preview.html', {
                     'subscriptions': subscriptions_data
+                })
+
+            except Exception as e:
+                messages.error(request, f'Error importing CSV file: {str(e)}')
+                return redirect('settings')
+
+    # If not a POST request, redirect to settings
+    return redirect('settings')
+
+
+def import_categories_csv(request):
+    """
+    Import categories from a CSV file.
+    """
+    if request.method == 'POST':
+        # Check if we're processing a form submission from the preview page
+        if 'from_preview' in request.POST:
+            # Get the data from the session
+            categories_data = []
+            session_data = request.session.get('import_categories_preview_data', [])
+
+            for cat in session_data:
+                # Convert the stored data back to the format expected by the import code
+                category = {
+                    'name': cat.get('name', '')
+                }
+                categories_data.append(category)
+
+            # Clear the session data
+            if 'import_categories_preview_data' in request.session:
+                del request.session['import_categories_preview_data']
+
+            # Process the import
+            if 'import_all' in request.POST:
+                imported_count = 0
+                skipped_count = 0
+                for category_data in categories_data:
+                    # Skip if category with this name already exists
+                    if Category.objects.filter(name=category_data['name']).exists():
+                        skipped_count += 1
+                        continue
+
+                    # Create category
+                    Category.objects.create(
+                        name=category_data['name']
+                    )
+                    imported_count += 1
+
+                if skipped_count > 0:
+                    messages.success(request, f'Successfully imported {imported_count} categories. Skipped {skipped_count} duplicate entries.')
+                else:
+                    messages.success(request, f'Successfully imported {imported_count} categories.')
+                return redirect('settings')
+
+            # If 'import_selected' is in POST, import only selected categories
+            elif 'import_selected' in request.POST:
+                selected_indices = request.POST.getlist('selected_categories')
+
+                if not selected_indices:
+                    messages.error(request, 'No categories selected for import.')
+                    return redirect('settings')
+
+                imported_count = 0
+                skipped_count = 0
+                for index in selected_indices:
+                    try:
+                        category_data = categories_data[int(index)]
+
+                        # Skip if category with this name already exists
+                        if Category.objects.filter(name=category_data['name']).exists():
+                            skipped_count += 1
+                            continue
+
+                        # Create category
+                        Category.objects.create(
+                            name=category_data['name']
+                        )
+                        imported_count += 1
+                    except (IndexError, ValueError):
+                        continue
+
+                if skipped_count > 0:
+                    messages.success(request, f'Successfully imported {imported_count} categories. Skipped {skipped_count} duplicate entries.')
+                else:
+                    messages.success(request, f'Successfully imported {imported_count} categories.')
+                return redirect('settings')
+
+        # Handle initial file upload
+        else:
+            # Check if a file was uploaded
+            if 'csv_file' not in request.FILES:
+                messages.error(request, 'Please select a CSV file to import.')
+                return redirect('settings')
+
+            csv_file = request.FILES['csv_file']
+
+            # Check if it's a CSV file
+            if not csv_file.name.endswith('.csv'):
+                messages.error(request, 'Please upload a CSV file.')
+                return redirect('settings')
+
+            # Parse the CSV file
+            try:
+                # Decode the file content
+                file_data = csv_file.read().decode('utf-8')
+                csv_data = io.StringIO(file_data)
+                categories_data = parse_categories_csv(csv_data)
+
+                # If no categories were found, show an error
+                if not categories_data:
+                    messages.error(request, 'No valid category data found in the CSV file.')
+                    return redirect('settings')
+
+                # Store the parsed data in the session for later use
+                request.session['import_categories_preview_data'] = [
+                    {
+                        'name': cat.get('name', '')
+                    }
+                    for cat in categories_data
+                ]
+
+                # Show a preview of the categories to import
+                return render(request, 'subscriptions/import_categories_preview.html', {
+                    'categories': categories_data
+                })
+
+            except Exception as e:
+                messages.error(request, f'Error importing CSV file: {str(e)}')
+                return redirect('settings')
+
+    # If not a POST request, redirect to settings
+    return redirect('settings')
+
+
+def import_currencies_csv(request):
+    """
+    Import currencies from a CSV file.
+    """
+    if request.method == 'POST':
+        # Check if we're processing a form submission from the preview page
+        if 'from_preview' in request.POST:
+            # Get the data from the session
+            currencies_data = []
+            session_data = request.session.get('import_currencies_preview_data', [])
+
+            for curr in session_data:
+                # Convert the stored data back to the format expected by the import code
+                currency = {
+                    'code': curr.get('code', ''),
+                    'name': curr.get('name', ''),
+                    'symbol': curr.get('symbol', ''),
+                    'is_default': curr.get('is_default', False)
+                }
+                currencies_data.append(currency)
+
+            # Clear the session data
+            if 'import_currencies_preview_data' in request.session:
+                del request.session['import_currencies_preview_data']
+
+            # Process the import
+            if 'import_all' in request.POST:
+                imported_count = 0
+                skipped_count = 0
+                for currency_data in currencies_data:
+                    # Skip if currency with this code already exists
+                    if Currency.objects.filter(code=currency_data['code']).exists():
+                        skipped_count += 1
+                        continue
+
+                    # Create currency
+                    Currency.objects.create(
+                        code=currency_data['code'],
+                        name=currency_data['name'],
+                        symbol=currency_data['symbol'],
+                        is_default=currency_data['is_default']
+                    )
+                    imported_count += 1
+
+                if skipped_count > 0:
+                    messages.success(request, f'Successfully imported {imported_count} currencies. Skipped {skipped_count} duplicate entries.')
+                else:
+                    messages.success(request, f'Successfully imported {imported_count} currencies.')
+                return redirect('settings')
+
+            # If 'import_selected' is in POST, import only selected currencies
+            elif 'import_selected' in request.POST:
+                selected_indices = request.POST.getlist('selected_currencies')
+
+                if not selected_indices:
+                    messages.error(request, 'No currencies selected for import.')
+                    return redirect('settings')
+
+                imported_count = 0
+                skipped_count = 0
+                for index in selected_indices:
+                    try:
+                        currency_data = currencies_data[int(index)]
+
+                        # Skip if currency with this code already exists
+                        if Currency.objects.filter(code=currency_data['code']).exists():
+                            skipped_count += 1
+                            continue
+
+                        # Create currency
+                        Currency.objects.create(
+                            code=currency_data['code'],
+                            name=currency_data['name'],
+                            symbol=currency_data['symbol'],
+                            is_default=currency_data['is_default']
+                        )
+                        imported_count += 1
+                    except (IndexError, ValueError):
+                        continue
+
+                if skipped_count > 0:
+                    messages.success(request, f'Successfully imported {imported_count} currencies. Skipped {skipped_count} duplicate entries.')
+                else:
+                    messages.success(request, f'Successfully imported {imported_count} currencies.')
+                return redirect('settings')
+
+        # Handle initial file upload
+        else:
+            # Check if a file was uploaded
+            if 'csv_file' not in request.FILES:
+                messages.error(request, 'Please select a CSV file to import.')
+                return redirect('settings')
+
+            csv_file = request.FILES['csv_file']
+
+            # Check if it's a CSV file
+            if not csv_file.name.endswith('.csv'):
+                messages.error(request, 'Please upload a CSV file.')
+                return redirect('settings')
+
+            # Parse the CSV file
+            try:
+                # Decode the file content
+                file_data = csv_file.read().decode('utf-8')
+                csv_data = io.StringIO(file_data)
+                currencies_data = parse_currencies_csv(csv_data)
+
+                # If no currencies were found, show an error
+                if not currencies_data:
+                    messages.error(request, 'No valid currency data found in the CSV file.')
+                    return redirect('settings')
+
+                # Store the parsed data in the session for later use
+                request.session['import_currencies_preview_data'] = [
+                    {
+                        'code': curr.get('code', ''),
+                        'name': curr.get('name', ''),
+                        'symbol': curr.get('symbol', ''),
+                        'is_default': curr.get('is_default', False)
+                    }
+                    for curr in currencies_data
+                ]
+
+                # Show a preview of the currencies to import
+                return render(request, 'subscriptions/import_currencies_preview.html', {
+                    'currencies': currencies_data
                 })
 
             except Exception as e:

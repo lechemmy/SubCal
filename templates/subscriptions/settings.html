@@ -44,7 +44,11 @@
         <div class="card mb-4">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="card-title mb-0">Categories</h5>
-                <a href="{% url 'category-create' %}" class="btn btn-sm btn-success">Add Category</a>
+                <div>
+                    <a href="{% url 'category-create' %}" class="btn btn-sm btn-success">Add Category</a>
+                    <a href="{% url 'export-categories-csv' %}" class="btn btn-sm btn-outline-primary">Export</a>
+                    <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#importCategoriesModal">Import</button>
+                </div>
             </div>
             <div class="card-body">
                 {% if categories %}
@@ -85,7 +89,11 @@
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="card-title mb-0">Currencies</h5>
-                <a href="{% url 'currency-create' %}" class="btn btn-sm btn-success">Add Currency</a>
+                <div>
+                    <a href="{% url 'currency-create' %}" class="btn btn-sm btn-success">Add Currency</a>
+                    <a href="{% url 'export-currencies-csv' %}" class="btn btn-sm btn-outline-primary">Export</a>
+                    <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#importCurrenciesModal">Import</button>
+                </div>
             </div>
             <div class="card-body">
                 {% if currencies %}
@@ -133,6 +141,57 @@
                         <a href="{% url 'currency-create' %}" class="btn btn-primary">Create First Currency</a>
                     </p>
                 {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Import Categories Modal -->
+<div class="modal fade" id="importCategoriesModal" tabindex="-1" aria-labelledby="importCategoriesModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="importCategoriesModalLabel">Import Categories</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Import categories from a CSV file. The file should have a header row with the column "name".</p>
+                <p>Any duplicate entries (categories with names that already exist) will be skipped during import.</p>
+                <form method="post" action="{% url 'import-categories-csv' %}" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="categoriesCsvFile" class="form-label">CSV File</label>
+                        <input type="file" name="csv_file" class="form-control" id="categoriesCsvFile" required>
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">Preview Import</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Import Currencies Modal -->
+<div class="modal fade" id="importCurrenciesModal" tabindex="-1" aria-labelledby="importCurrenciesModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="importCurrenciesModalLabel">Import Currencies</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Import currencies from a CSV file. The file should have a header row with the columns "code", "name", "symbol", and "is_default".</p>
+                <p>Any duplicate entries (currencies with codes that already exist) will be skipped during import.</p>
+                <form method="post" action="{% url 'import-currencies-csv' %}" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="currenciesCsvFile" class="form-label">CSV File</label>
+                        <input type="file" name="csv_file" class="form-control" id="currenciesCsvFile" required>
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">Preview Import</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
