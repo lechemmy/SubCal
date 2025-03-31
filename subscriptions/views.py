@@ -125,7 +125,37 @@ class SubscriptionDeleteView(DeleteView):
     success_url = reverse_lazy('subscription-list')
 
 def home(request):
-    return render(request, 'subscriptions/home.html')
+    # Get all subscriptions
+    subscriptions = Subscription.objects.all()
+
+    # Get current date and date 2 weeks from now
+    today = datetime.now().date()
+    two_weeks_from_now = today + timedelta(days=14)
+
+    # Find subscriptions that are upcoming within the next 2 weeks
+    upcoming_subscriptions = []
+
+    for subscription in subscriptions:
+        # Check each day in the next 2 weeks
+        current_date = today
+        while current_date <= two_weeks_from_now:
+            if is_renewal_date(subscription, current_date):
+                # Add subscription with its renewal date to the list
+                upcoming_subscriptions.append({
+                    'subscription': subscription,
+                    'renewal_date': current_date
+                })
+                break  # Only add the first renewal date for each subscription
+            current_date += timedelta(days=1)
+
+    # Sort upcoming subscriptions by renewal date
+    upcoming_subscriptions.sort(key=lambda x: x['renewal_date'])
+
+    context = {
+        'upcoming_subscriptions': upcoming_subscriptions
+    }
+
+    return render(request, 'subscriptions/home.html', context)
 
 def calendar_view(request):
     # Get current month, year, and view type
