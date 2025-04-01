@@ -33,14 +33,19 @@ class SubscriptionListView(ListView):
             'name': 'name',
             'cost': 'cost',
             'renewal_period': 'renewal_period',
-            'start_date': 'start_date'
+            'start_date': 'start_date',
+            'next_billing_date': 'next_billing_date'  # This will be handled specially
         }
 
         # Apply ordering
         order_field = field_mapping.get(sort_by, 'name')
 
+        # Special handling for next_billing_date since it's not a model field
+        if order_field == 'next_billing_date':
+            # We'll handle this in get_context_data by sorting the queryset there
+            return queryset
         # Use case-insensitive sorting for name field
-        if order_field == 'name':
+        elif order_field == 'name':
             if direction == 'desc':
                 return queryset.order_by(Lower(order_field).desc())
             else:
@@ -54,13 +59,32 @@ class SubscriptionListView(ListView):
         context = super().get_context_data(**kwargs)
 
         # Get current sort parameters to pass to template
-        context['current_sort'] = self.request.GET.get('sort', 'name')
-        context['current_direction'] = self.request.GET.get('direction', 'asc')
+        sort_by = self.request.GET.get('sort', 'name')
+        direction = self.request.GET.get('direction', 'asc')
+        context['current_sort'] = sort_by
+        context['current_direction'] = direction
+
+        # Get all subscriptions and calculate next billing date
+        subscriptions_list = list(context['subscriptions'])
+        from .utils import get_next_billing_date
+
+        for subscription in subscriptions_list:
+            subscription.next_billing_date = get_next_billing_date(subscription)
+
+        # Sort by next_billing_date if requested
+        if sort_by == 'next_billing_date':
+            subscriptions_list.sort(
+                key=lambda x: x.next_billing_date,
+                reverse=(direction == 'desc')
+            )
+
+        # Update the context with the sorted list
+        context['subscriptions'] = subscriptions_list
 
         # Calculate annual cost for each subscription and group by currency
         annual_totals = {}
 
-        for subscription in context['subscriptions']:
+        for subscription in subscriptions_list:
             currency = subscription.currency
             annual_cost = subscription.cost
 

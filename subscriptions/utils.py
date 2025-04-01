@@ -369,3 +369,126 @@ def parse_currencies_csv(csv_file):
         currencies.append(row)
 
     return currencies
+
+def get_next_billing_date(subscription):
+    """
+    Calculate the next billing date for a subscription from today.
+
+    Args:
+        subscription: A Subscription object
+
+    Returns:
+        A datetime.date object representing the next billing date
+    """
+    from datetime import date
+    today = date.today()
+    start_date = subscription.start_date
+    renewal_period = subscription.renewal_period
+
+    if renewal_period == 'weekly':
+        # For weekly, find the next weekly date from today
+        days_since_start = (today - start_date).days
+        days_until_next = 7 - (days_since_start % 7)
+        if days_until_next == 7:
+            days_until_next = 0
+        return today + timedelta(days=days_until_next)
+
+    elif renewal_period == 'monthly':
+        # For monthly, find the next occurrence of the start day
+        next_date = today.replace(day=1)  # Start from the first day of the current month
+
+        while True:
+            # Try to set the day to the start day
+            try:
+                next_date = next_date.replace(day=start_date.day)
+            except ValueError:
+                # If the day doesn't exist in this month, use the last day
+                last_day = calendar.monthrange(next_date.year, next_date.month)[1]
+                next_date = next_date.replace(day=last_day)
+
+            # If the date is in the future, we found our next billing date
+            if next_date >= today:
+                return next_date
+
+            # Otherwise, move to the next month
+            if next_date.month == 12:
+                next_date = next_date.replace(year=next_date.year + 1, month=1, day=1)
+            else:
+                next_date = next_date.replace(month=next_date.month + 1, day=1)
+
+    elif renewal_period == 'quarterly':
+        # For quarterly, find the next quarterly date from the start date
+        next_date = today.replace(day=1)  # Start from the first day of the current month
+
+        while True:
+            # Calculate months since start
+            months_since_start = (next_date.year - start_date.year) * 12 + next_date.month - start_date.month
+
+            # If this is a quarterly month (0, 3, 6, 9 months from start)
+            if months_since_start % 3 == 0:
+                # Try to set the day to the start day
+                try:
+                    next_date = next_date.replace(day=start_date.day)
+                except ValueError:
+                    # If the day doesn't exist in this month, use the last day
+                    last_day = calendar.monthrange(next_date.year, next_date.month)[1]
+                    next_date = next_date.replace(day=last_day)
+
+                # If the date is in the future, we found our next billing date
+                if next_date >= today:
+                    return next_date
+
+            # Move to the next month
+            if next_date.month == 12:
+                next_date = next_date.replace(year=next_date.year + 1, month=1, day=1)
+            else:
+                next_date = next_date.replace(month=next_date.month + 1, day=1)
+
+    elif renewal_period == 'yearly':
+        # For yearly, find the next yearly date from the start date
+        next_date = today.replace(month=start_date.month, day=1)
+
+        # If we're already past this year's date, move to next year
+        if today.month > start_date.month or (today.month == start_date.month and today.day > start_date.day):
+            next_date = next_date.replace(year=today.year + 1)
+        else:
+            next_date = next_date.replace(year=today.year)
+
+        # Try to set the day to the start day
+        try:
+            next_date = next_date.replace(day=start_date.day)
+        except ValueError:
+            # If the day doesn't exist in this month, use the last day
+            last_day = calendar.monthrange(next_date.year, next_date.month)[1]
+            next_date = next_date.replace(day=last_day)
+
+        return next_date
+
+    elif renewal_period == 'biennial':
+        # For biennial, find the next biennial date from the start date
+        next_date = today.replace(month=start_date.month, day=1)
+
+        # Calculate years since start
+        years_since_start = today.year - start_date.year
+
+        # If we're in a biennial year but haven't reached the date yet
+        if years_since_start % 2 == 0 and (today.month < start_date.month or 
+                                          (today.month == start_date.month and today.day < start_date.day)):
+            next_date = next_date.replace(year=today.year)
+        else:
+            # Move to the next biennial year
+            next_year = today.year + (1 if years_since_start % 2 == 0 else 2)
+            next_date = next_date.replace(year=next_year)
+
+        # Try to set the day to the start day
+        try:
+            next_date = next_date.replace(day=start_date.day)
+        except ValueError:
+            # If the day doesn't exist in this month, use the last day
+            last_day = calendar.monthrange(next_date.year, next_date.month)[1]
+            next_date = next_date.replace(day=last_day)
+
+        return next_date
+
+    # Default fallback
+    return start_date

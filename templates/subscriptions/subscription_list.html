@@ -56,6 +56,14 @@
                                     {% endif %}
                                 </a>
                             </th>
+                            <th>
+                                <a href="?sort=next_billing_date&direction={% if current_sort == 'next_billing_date' and current_direction == 'asc' %}desc{% else %}asc{% endif %}" class="text-decoration-none">
+                                    Next Billing Date
+                                    {% if current_sort == 'next_billing_date' %}
+                                        <i class="bi bi-arrow-{% if current_direction == 'asc' %}up{% else %}down{% endif %}"></i>
+                                    {% endif %}
+                                </a>
+                            </th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -70,6 +78,7 @@
                                 <td style="color: var(--on-surface);">{{ subscription.get_currency_symbol }}{{ subscription.cost }}</td>
                                 <td style="color: var(--on-surface);">{{ subscription.get_renewal_period_display }}</td>
                                 <td style="color: var(--on-surface);">{{ subscription.start_date }}</td>
+                                <td style="color: var(--on-surface);">{{ subscription.next_billing_date }}</td>
                                 <td>
                                     <a href="{% url 'subscription-update' subscription.id %}" class="btn btn-sm btn-primary me-1">Edit</a>
                                     <a href="{% url 'subscription-delete' subscription.id %}" class="btn btn-sm btn-danger">Delete</a>
