@@ -476,8 +476,8 @@ def get_next_billing_date(subscription):
                                           (today.month == start_date.month and today.day < start_date.day)):
             next_date = next_date.replace(year=today.year)
         else:
-            # Move to the next biennial year
-            next_year = today.year + (1 if years_since_start % 2 == 0 else 2)
+            # Move to the next biennial year - always add 2 years to ensure biennial renewals
+            next_year = today.year + (2 - (years_since_start % 2))
             next_date = next_date.replace(year=next_year)
 
         # Try to set the day to the start day
