@@ -46,6 +46,34 @@ class OverviewView(TemplateView):
         subscription_spending = self.calculate_subscription_spending(subscriptions, exchange_rates)
         context['subscription_spending'] = subscription_spending
 
+        # Calculate annual cost totals and grand total in GBP
+        annual_cost_totals = {}
+        grand_total_gbp = Decimal('0.0')
+
+        for subscription in subscriptions:
+            currency = subscription.currency
+            annual_cost = self.calculate_annual_cost(subscription)
+
+            # Initialize currency if not present
+            if currency not in annual_cost_totals:
+                annual_cost_totals[currency] = {
+                    'original_cost': Decimal('0.0'),
+                    'symbol': subscription.get_currency_symbol(),
+                    'gbp_cost': Decimal('0.0')
+                }
+
+            # Add to totals
+            annual_cost_totals[currency]['original_cost'] += annual_cost
+
+            # Convert to GBP and add to GBP total
+            gbp_rate = exchange_rates.get(currency, 1.0)
+            gbp_cost = annual_cost * Decimal(str(gbp_rate))
+            annual_cost_totals[currency]['gbp_cost'] += gbp_cost
+            grand_total_gbp += gbp_cost
+
+        context['annual_cost_totals'] = annual_cost_totals
+        context['grand_total_gbp'] = grand_total_gbp
+
         # Calculate monthly billed costs for bar graph (only subscriptions billed in that month)
         monthly_billed_costs = self.calculate_monthly_billed_costs(subscriptions, exchange_rates, selected_year)
         context['monthly_billed_costs'] = monthly_billed_costs

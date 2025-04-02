@@ -21,6 +21,42 @@
 <div class="row mb-4">
     <div class="col-md-12">
         <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Annual Cost Totals</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Currency</th>
+                                <th>Annual Cost</th>
+                                <th>GBP Equivalent</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for currency, data in annual_cost_totals.items %}
+                                <tr>
+                                    <td>{{ currency }}</td>
+                                    <td>{{ data.symbol }}{{ data.original_cost|floatformat:2 }}</td>
+                                    <td>£{{ data.gbp_cost|floatformat:2 }}</td>
+                                </tr>
+                            {% endfor %}
+                            <tr class="table-primary fw-bold">
+                                <td colspan="2" class="text-end">Grand Total (GBP):</td>
+                                <td>£{{ grand_total_gbp|floatformat:2 }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="card-title mb-0">Monthly Billed Costs (in GBP) - {{ selected_year }}</h5>
                 <div class="btn-group">
