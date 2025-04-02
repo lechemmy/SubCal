@@ -196,6 +196,22 @@ def calendar_view(request):
     # Get all subscriptions
     subscriptions = Subscription.objects.all()
 
+    # Create a wrapper class to hold subscription and is_past flag
+    class SubscriptionWrapper:
+        def __init__(self, subscription, is_past):
+            self.subscription = subscription
+            self.is_past = is_past
+
+        def __getattr__(self, name):
+            # Delegate attribute access to the wrapped subscription
+            return getattr(self.subscription, name)
+
+        def __eq__(self, other):
+            # Allow comparison with the wrapped subscription
+            if isinstance(other, SubscriptionWrapper):
+                return self.subscription == other.subscription
+            return self.subscription == other
+
     if view_type == 'month':
         # Create a calendar for the current month
         cal = calendar.monthcalendar(year, month)
@@ -214,7 +230,10 @@ def calendar_view(request):
 
             for renewal_date in renewal_dates:
                 if renewal_date.day in calendar_data:
-                    calendar_data[renewal_date.day].append(subscription)
+                    # Create a wrapper with the subscription and is_past flag
+                    is_past = renewal_date < now.date()
+                    subscription_wrapper = SubscriptionWrapper(subscription, is_past)
+                    calendar_data[renewal_date.day].append(subscription_wrapper)
 
         # Previous and next month links
         prev_month = month - 1
@@ -271,7 +290,10 @@ def calendar_view(request):
 
                 for renewal_date in renewal_dates:
                     if renewal_date.day in month_data:
-                        month_data[renewal_date.day].append(subscription)
+                        # Create a wrapper with the subscription and is_past flag
+                        is_past = renewal_date < now.date()
+                        subscription_wrapper = SubscriptionWrapper(subscription, is_past)
+                        month_data[renewal_date.day].append(subscription_wrapper)
 
             year_calendar.append({
                 'month_num': month_num,
