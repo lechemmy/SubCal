@@ -3,6 +3,7 @@ from django.urls import reverse_lazy
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView, TemplateView
 from .models import Subscription, Category, Currency
 from django.contrib import messages
+from django import forms
 import calendar
 import io
 import requests
@@ -78,13 +79,31 @@ class SubscriptionListView(ListView):
                 reverse=(direction == 'desc')
             )
 
-        # Update the context with the sorted list
+        # Separate active and cancelled subscriptions
+        active_subscriptions = []
+        cancelled_subscriptions = []
+
+        for subscription in subscriptions_list:
+            if hasattr(subscription, 'status') and subscription.status == 'cancelled':
+                cancelled_subscriptions.append(subscription)
+            else:
+                active_subscriptions.append(subscription)
+
+        # Update the context with the separated lists
+        context['active_subscriptions'] = active_subscriptions
+        context['cancelled_subscriptions'] = cancelled_subscriptions
+
+        # Keep the original list for backward compatibility
         context['subscriptions'] = subscriptions_list
 
         # Calculate annual cost for each subscription and group by currency
         annual_totals = {}
 
         for subscription in subscriptions_list:
+            # Skip cancelled subscriptions for annual cost calculation
+            if hasattr(subscription, 'status') and subscription.status == 'cancelled':
+                continue
+
             currency = subscription.currency
             annual_cost = subscription.cost
 
@@ -95,6 +114,8 @@ class SubscriptionListView(ListView):
                 annual_cost = annual_cost * 12  # 12 months in a year
             elif subscription.renewal_period == 'quarterly':
                 annual_cost = annual_cost * 4   # 4 quarters in a year
+            elif subscription.renewal_period == 'biennial':
+                annual_cost = annual_cost / 2   # Cost is every 2 years
             # For yearly, the cost is already annual
 
             # Add to the appropriate currency total
@@ -134,13 +155,42 @@ class SubscriptionCreateView(CreateView):
 class SubscriptionUpdateView(UpdateView):
     model = Subscription
     template_name = 'subscriptions/subscription_form.html'
-    fields = ['name', 'category', 'cost', 'currency', 'renewal_period', 'start_date', 'notes']
+    fields = ['name', 'category', 'cost', 'currency', 'renewal_period', 'start_date', 'status', 'notes']
     success_url = reverse_lazy('subscription-list')
 
     def get_form(self, form_class=None):
         form = super().get_form(form_class)
         form.fields['category'].queryset = Category.objects.all().order_by(Lower('name'))
+
+        # If the subscription is cancelled, show the cancellation date field
+        if self.object and self.object.status == 'cancelled':
+            form.fields['cancellation_date'] = forms.DateField(
+                required=True,
+                widget=forms.DateInput(attrs={'type': 'date'}),
+                initial=self.object.cancellation_date
+            )
+
         return form
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+
+        # Handle cancellation date if status is cancelled
+        if form.cleaned_data.get('status') == 'cancelled':
+            # If cancellation_date is in the form, use it
+            if 'cancellation_date' in form.cleaned_data:
+                self.object.cancellation_date = form.cleaned_data['cancellation_date']
+            # Otherwise, set it to today if it's not already set
+            elif not self.object.cancellation_date:
+                from django.utils import timezone
+                self.object.cancellation_date = timezone.now().date()
+            self.object.save()
+        # If status is active, clear the cancellation date
+        elif form.cleaned_data.get('status') == 'active':
+            self.object.cancellation_date = None
+            self.object.save()
+
+        return response
 
 class SubscriptionDeleteView(DeleteView):
     model = Subscription
@@ -149,8 +199,8 @@ class SubscriptionDeleteView(DeleteView):
     success_url = reverse_lazy('subscription-list')
 
 def home(request):
-    # Get all subscriptions
-    subscriptions = Subscription.objects.all()
+    # Get all active subscriptions
+    subscriptions = Subscription.objects.filter(status='active')
 
     # Get current date and date 2 weeks from now
     today = datetime.now().date()
@@ -194,6 +244,8 @@ def calendar_view(request):
     current_year = now.year
 
     # Get all subscriptions
+    # For past dates, include all subscriptions (including cancelled ones for historical view)
+    # For future dates, only include active subscriptions
     subscriptions = Subscription.objects.all()
 
     # Create a wrapper class to hold subscription and is_past flag
@@ -232,6 +284,11 @@ def calendar_view(request):
                 if renewal_date.day in calendar_data:
                     # Create a wrapper with the subscription and is_past flag
                     is_past = renewal_date < now.date()
+
+                    # Skip cancelled subscriptions for future dates
+                    if not is_past and hasattr(subscription, 'status') and subscription.status == 'cancelled':
+                        continue
+
                     subscription_wrapper = SubscriptionWrapper(subscription, is_past)
                     calendar_data[renewal_date.day].append(subscription_wrapper)
 
@@ -326,6 +383,8 @@ def calendar_view(request):
 def day_view(request, year, month, day):
     # Create a date object for the selected day
     selected_date = date(year, month, day)
+    now = datetime.now().date()
+    is_past = selected_date < now
 
     # Get all subscriptions
     subscriptions = Subscription.objects.all()
@@ -334,6 +393,10 @@ def day_view(request, year, month, day):
     day_subscriptions = []
 
     for subscription in subscriptions:
+        # Skip cancelled subscriptions for future dates
+        if not is_past and hasattr(subscription, 'status') and subscription.status == 'cancelled':
+            continue
+
         if is_renewal_date(subscription, selected_date):
             day_subscriptions.append(subscription)
 

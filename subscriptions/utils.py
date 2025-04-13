@@ -116,6 +116,9 @@ def is_renewal_date(subscription, check_date):
     it renews on the last valid date of the month for that occurrence only.
     For example, a 30th Jan monthly subscription will fall next on 28th February, then 30th March.
 
+    If the subscription is cancelled and the check_date is after the cancellation date,
+    this function will return False.
+
     Args:
         subscription: The subscription to check
         check_date: The date to check
@@ -125,6 +128,11 @@ def is_renewal_date(subscription, check_date):
     """
     start_date = subscription.start_date
     renewal_period = subscription.renewal_period
+
+    # If the subscription is cancelled and check_date is after the cancellation date, return False
+    if hasattr(subscription, 'status') and subscription.status == 'cancelled' and subscription.cancellation_date:
+        if check_date > subscription.cancellation_date:
+            return False
 
     if renewal_period == 'weekly':
         # For weekly, check if this day is a renewal date
@@ -373,17 +381,24 @@ def parse_currencies_csv(csv_file):
 def get_next_billing_date(subscription):
     """
     Calculate the next billing date for a subscription from today.
+    If the subscription is cancelled, returns None if today is after the cancellation date.
 
     Args:
         subscription: A Subscription object
 
     Returns:
-        A datetime.date object representing the next billing date
+        A datetime.date object representing the next billing date, or None if the subscription is cancelled
+        and today is after the cancellation date.
     """
     from datetime import date
     today = date.today()
     start_date = subscription.start_date
     renewal_period = subscription.renewal_period
+
+    # If the subscription is cancelled and today is after the cancellation date, return None
+    if hasattr(subscription, 'status') and subscription.status == 'cancelled' and subscription.cancellation_date:
+        if today > subscription.cancellation_date:
+            return None
 
     if renewal_period == 'weekly':
         # For weekly, find the next weekly date from today

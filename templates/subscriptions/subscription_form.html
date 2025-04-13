@@ -98,6 +98,33 @@
                         <div class="form-text">Enter the date when the subscription started or will start.</div>
                     </div>
 
+                    {% if form.instance.id %}
+                    <div class="mb-3">
+                        <label for="{{ form.status.id_for_label }}" class="form-label">Status</label>
+                        {{ form.status.errors }}
+                        <select name="{{ form.status.name }}" id="{{ form.status.id_for_label }}" 
+                                class="form-select {% if form.status.errors %}is-invalid{% endif %}" required>
+                            {% for value, text in form.fields.status.choices %}
+                                <option value="{{ value }}" {% if form.status.value == value %}selected{% endif %}>
+                                    {{ text }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                        <div class="form-text">Set to "Cancelled" to cancel this subscription.</div>
+                    </div>
+
+                    {% if 'cancellation_date' in form.fields %}
+                    <div class="mb-3" id="cancellation-date-field">
+                        <label for="{{ form.cancellation_date.id_for_label }}" class="form-label">Cancellation Date</label>
+                        {{ form.cancellation_date.errors }}
+                        <input type="date" name="{{ form.cancellation_date.name }}" id="{{ form.cancellation_date.id_for_label }}" 
+                               class="form-control {% if form.cancellation_date.errors %}is-invalid{% endif %}" 
+                               value="{{ form.cancellation_date.value|date:'Y-m-d'|default:'' }}" required>
+                        <div class="form-text">Enter the date when the subscription was or will be cancelled.</div>
+                    </div>
+                    {% endif %}
+                    {% endif %}
+
                     <div class="mb-3">
                         <label for="{{ form.notes.id_for_label }}" class="form-label">Notes</label>
                         {{ form.notes.errors }}
@@ -137,4 +164,33 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Get the status dropdown and cancellation date field
+        const statusDropdown = document.getElementById('{{ form.status.id_for_label }}');
+        const cancellationDateField = document.getElementById('cancellation-date-field');
+
+        // Function to show/hide cancellation date field based on status
+        function toggleCancellationDateField() {
+            if (statusDropdown && cancellationDateField) {
+                if (statusDropdown.value === 'cancelled') {
+                    cancellationDateField.style.display = 'block';
+                } else {
+                    cancellationDateField.style.display = 'none';
+                }
+            }
+        }
+
+        // Initial toggle based on current status
+        toggleCancellationDateField();
+
+        // Add event listener to status dropdown
+        if (statusDropdown) {
+            statusDropdown.addEventListener('change', toggleCancellationDateField);
+        }
+    });
+</script>
 {% endblock %}

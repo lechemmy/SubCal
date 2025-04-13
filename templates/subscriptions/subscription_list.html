@@ -17,9 +17,12 @@
     </div>
 </div>
 
-{% if subscriptions %}
-    <div class="row">
+{% if active_subscriptions or cancelled_subscriptions %}
+    <!-- Active Subscriptions Section -->
+    {% if active_subscriptions %}
+    <div class="row mb-4">
         <div class="col">
+            <h2>Active Subscriptions</h2>
             <div class="table-responsive">
                 <table class="table table-striped">
                     <thead>
@@ -68,7 +71,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {% for subscription in subscriptions %}
+                        {% for subscription in active_subscriptions %}
                             <tr>
                                 <td>
                                     <a href="{% url 'subscription-detail' subscription.id %}" class="text-decoration-none" style="color: var(--primary);">
@@ -87,32 +90,107 @@
                         {% endfor %}
                     </tbody>
                 </table>
-
-                {% if annual_totals %}
-                <div class="card mt-4">
-                    <div class="card-header">
-                        <h5 class="card-title mb-0">Annual Cost Totals</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="row">
-                            {% for currency, data in annual_totals.items %}
-                            <div class="col-md-4 mb-3">
-                                <div class="card">
-                                    <div class="card-body text-center">
-                                        <h5 class="card-title">{{ currency }}</h5>
-                                        <p class="card-text fs-4">{{ data.symbol }}{{ data.total|floatformat:2 }}</p>
-                                        <p class="card-text text-muted">per year</p>
-                                    </div>
-                                </div>
-                            </div>
-                            {% endfor %}
-                        </div>
-                    </div>
-                </div>
-                {% endif %}
             </div>
         </div>
     </div>
+    {% endif %}
+
+    <!-- Cancelled Subscriptions Section -->
+    {% if cancelled_subscriptions %}
+    <div class="row mb-4">
+        <div class="col">
+            <h2>Cancelled Subscriptions</h2>
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>
+                                <a href="?sort=name&direction={% if current_sort == 'name' and current_direction == 'asc' %}desc{% else %}asc{% endif %}" class="text-decoration-none">
+                                    Name
+                                    {% if current_sort == 'name' %}
+                                        <i class="bi bi-arrow-{% if current_direction == 'asc' %}up{% else %}down{% endif %}"></i>
+                                    {% endif %}
+                                </a>
+                            </th>
+                            <th>
+                                <a href="?sort=cost&direction={% if current_sort == 'cost' and current_direction == 'asc' %}desc{% else %}asc{% endif %}" class="text-decoration-none">
+                                    Cost
+                                    {% if current_sort == 'cost' %}
+                                        <i class="bi bi-arrow-{% if current_direction == 'asc' %}up{% else %}down{% endif %}"></i>
+                                    {% endif %}
+                                </a>
+                            </th>
+                            <th>
+                                <a href="?sort=renewal_period&direction={% if current_sort == 'renewal_period' and current_direction == 'asc' %}desc{% else %}asc{% endif %}" class="text-decoration-none">
+                                    Renewal Period
+                                    {% if current_sort == 'renewal_period' %}
+                                        <i class="bi bi-arrow-{% if current_direction == 'asc' %}up{% else %}down{% endif %}"></i>
+                                    {% endif %}
+                                </a>
+                            </th>
+                            <th>
+                                <a href="?sort=start_date&direction={% if current_sort == 'start_date' and current_direction == 'asc' %}desc{% else %}asc{% endif %}" class="text-decoration-none">
+                                    Start Date
+                                    {% if current_sort == 'start_date' %}
+                                        <i class="bi bi-arrow-{% if current_direction == 'asc' %}up{% else %}down{% endif %}"></i>
+                                    {% endif %}
+                                </a>
+                            </th>
+                            <th>Cancellation Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for subscription in cancelled_subscriptions %}
+                            <tr>
+                                <td>
+                                    <a href="{% url 'subscription-detail' subscription.id %}" class="text-decoration-none" style="color: var(--primary);">
+                                        {{ subscription.name }}
+                                    </a>
+                                </td>
+                                <td style="color: var(--on-surface);">{{ subscription.get_currency_symbol }}{{ subscription.cost }}</td>
+                                <td style="color: var(--on-surface);">{{ subscription.get_renewal_period_display }}</td>
+                                <td style="color: var(--on-surface);">{{ subscription.start_date }}</td>
+                                <td style="color: var(--on-surface);">{{ subscription.cancellation_date }}</td>
+                                <td>
+                                    <a href="{% url 'subscription-update' subscription.id %}" class="btn btn-sm btn-primary me-1">Edit</a>
+                                    <a href="{% url 'subscription-delete' subscription.id %}" class="btn btn-sm btn-danger">Delete</a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if annual_totals %}
+    <div class="row">
+        <div class="col">
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Annual Cost Totals</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for currency, data in annual_totals.items %}
+                        <div class="col-md-4 mb-3">
+                            <div class="card">
+                                <div class="card-body text-center">
+                                    <h5 class="card-title">{{ currency }}</h5>
+                                    <p class="card-text fs-4">{{ data.symbol }}{{ data.total|floatformat:2 }}</p>
+                                    <p class="card-text text-muted">per year</p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
 {% else %}
     <div class="row">
         <div class="col">

@@ -31,26 +31,29 @@ class OverviewView(TemplateView):
         # Get all subscriptions
         subscriptions = Subscription.objects.all()
 
+        # Get active subscriptions for cost calculations
+        active_subscriptions = [s for s in subscriptions if not (hasattr(s, 'status') and s.status == 'cancelled')]
+
         # Get exchange rates from API
         exchange_rates = self.get_exchange_rates()
 
         # Calculate spending by category
-        category_spending = self.calculate_category_spending(subscriptions, exchange_rates)
+        category_spending = self.calculate_category_spending(active_subscriptions, exchange_rates)
         context['category_spending'] = category_spending
 
         # Calculate spending by currency
-        currency_spending = self.calculate_currency_spending(subscriptions, exchange_rates)
+        currency_spending = self.calculate_currency_spending(active_subscriptions, exchange_rates)
         context['currency_spending'] = currency_spending
 
         # Calculate spending by subscription
-        subscription_spending = self.calculate_subscription_spending(subscriptions, exchange_rates)
+        subscription_spending = self.calculate_subscription_spending(active_subscriptions, exchange_rates)
         context['subscription_spending'] = subscription_spending
 
         # Calculate annual cost totals and grand total in GBP
         annual_cost_totals = {}
         grand_total_gbp = Decimal('0.0')
 
-        for subscription in subscriptions:
+        for subscription in active_subscriptions:
             currency = subscription.currency
             annual_cost = self.calculate_annual_cost(subscription)
 
@@ -79,7 +82,7 @@ class OverviewView(TemplateView):
         context['monthly_billed_costs'] = monthly_billed_costs
 
         # Calculate monthly costs for bar graph (all active subscriptions)
-        monthly_costs = self.calculate_monthly_costs(subscriptions, exchange_rates, selected_year)
+        monthly_costs = self.calculate_monthly_costs(active_subscriptions, exchange_rates, selected_year)
         context['monthly_costs'] = monthly_costs
 
         # Add exchange rates to context
@@ -261,6 +264,11 @@ class OverviewView(TemplateView):
                 if month_date.replace(day=1) < start_date.replace(day=1):
                     continue
 
+                # Skip if subscription is cancelled and month is after cancellation date
+                if hasattr(subscription, 'status') and subscription.status == 'cancelled' and subscription.cancellation_date:
+                    if month_date.replace(day=1) > subscription.cancellation_date.replace(day=1):
+                        continue
+
                 # Initialize currency if not present
                 if currency not in monthly_billed_costs[month_key]['original_costs']:
                     monthly_billed_costs[month_key]['original_costs'][currency] = 0
@@ -325,6 +333,11 @@ class OverviewView(TemplateView):
                 # Skip months before the subscription start date
                 if month_data['date'].replace(day=1) < start_date.replace(day=1):
                     continue
+
+                # Skip if subscription is cancelled and month is after cancellation date
+                if hasattr(subscription, 'status') and subscription.status == 'cancelled' and subscription.cancellation_date:
+                    if month_data['date'].replace(day=1) > subscription.cancellation_date.replace(day=1):
+                        continue
 
                 # Initialize currency if not present
                 if currency not in month_data['original_costs']:

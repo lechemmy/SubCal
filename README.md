@@ -196,6 +196,27 @@ SubCal uses environment variables for configuration, which can be set in a `.env
 - **Calendar View**: Visualize subscriptions in a monthly calendar
 - **Day View**: Click on a specific day to see subscriptions due on that day
 
+### Cancelling a Subscription
+
+1. Navigate to the subscription details page by clicking on the subscription name in the list view
+2. Click the "Edit" button
+3. Change the "Status" dropdown to "Cancelled"
+4. Set the "Cancellation Date" (defaults to the current date)
+5. Click "Save" to confirm the cancellation
+
+When a subscription is cancelled:
+- It will still appear in your subscription history
+- It will be marked as "[CANCELLED]" in the list view
+- No future payments will be calculated after the cancellation date
+- It will not appear in future dates on the calendar view
+
+### Reactivating a Cancelled Subscription
+
+1. Navigate to the subscription details page
+2. Click the "Edit" button
+3. Change the "Status" dropdown back to "Active"
+4. Click "Save" to reactivate the subscription
+
 ### Managing Categories and Currencies
 
 - Access the settings page to add, edit, or delete categories and currencies

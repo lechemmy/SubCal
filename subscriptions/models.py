@@ -36,6 +36,11 @@ class Currency(models.Model):
 
 
 class Subscription(models.Model):
+    STATUS_CHOICES = [
+        ('active', 'Active'),
+        ('cancelled', 'Cancelled'),
+    ]
+
     RENEWAL_CHOICES = [
         ('weekly', 'Weekly'),
         ('monthly', 'Monthly'),
@@ -62,6 +67,8 @@ class Subscription(models.Model):
     currency = models.CharField(max_length=3, choices=CURRENCY_CHOICES, default='USD')
     renewal_period = models.CharField(max_length=10, choices=RENEWAL_CHOICES, default='monthly')
     start_date = models.DateField(default=timezone.now)
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='active')
+    cancellation_date = models.DateField(null=True, blank=True)
     notes = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -69,5 +76,30 @@ class Subscription(models.Model):
     def get_currency_symbol(self):
         return self.CURRENCY_SYMBOLS.get(self.currency, '$')
 
+    def cancel(self, cancellation_date=None):
+        """
+        Cancel the subscription and set the cancellation date.
+        If no cancellation date is provided, the current date is used.
+        """
+        from django.utils import timezone
+        self.status = 'cancelled'
+        self.cancellation_date = cancellation_date or timezone.now().date()
+        self.save()
+
+    def reactivate(self):
+        """
+        Reactivate a cancelled subscription.
+        """
+        self.status = 'active'
+        self.cancellation_date = None
+        self.save()
+
+    def is_cancelled(self):
+        """
+        Check if the subscription is cancelled.
+        """
+        return self.status == 'cancelled'
+
     def __str__(self):
-        return f"{self.name} ({self.get_currency_symbol()}{self.cost} {self.get_renewal_period_display()})"
+        status_str = f" [CANCELLED]" if self.is_cancelled() else ""
+        return f"{self.name}{status_str} ({self.get_currency_symbol()}{self.cost} {self.get_renewal_period_display()})"
