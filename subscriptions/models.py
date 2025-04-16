@@ -69,6 +69,7 @@ class Subscription(models.Model):
     start_date = models.DateField(default=timezone.now)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='active')
     cancellation_date = models.DateField(null=True, blank=True)
+    url = models.URLField(blank=True, null=True, help_text="Website URL for this subscription")
     notes = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

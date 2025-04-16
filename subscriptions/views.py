@@ -138,7 +138,7 @@ class SubscriptionDetailView(DetailView):
 class SubscriptionCreateView(CreateView):
     model = Subscription
     template_name = 'subscriptions/subscription_form.html'
-    fields = ['name', 'category', 'cost', 'currency', 'renewal_period', 'start_date', 'notes']
+    fields = ['name', 'category', 'cost', 'currency', 'renewal_period', 'start_date', 'url', 'notes']
     success_url = reverse_lazy('subscription-list')
 
     def get_form(self, form_class=None):
@@ -155,7 +155,7 @@ class SubscriptionCreateView(CreateView):
 class SubscriptionUpdateView(UpdateView):
     model = Subscription
     template_name = 'subscriptions/subscription_form.html'
-    fields = ['name', 'category', 'cost', 'currency', 'renewal_period', 'start_date', 'status', 'notes']
+    fields = ['name', 'category', 'cost', 'currency', 'renewal_period', 'start_date', 'status', 'url', 'notes']
     success_url = reverse_lazy('subscription-list')
 
     def get_form(self, form_class=None):
@@ -605,6 +605,7 @@ def import_subscriptions_csv(request):
                     'cost': sub.get('cost', ''),
                     'currency': sub.get('currency', ''),
                     'renewal_period': sub.get('renewal_period', ''),
+                    'url': sub.get('url', ''),
                     'notes': sub.get('notes', '')
                 }
 
@@ -640,6 +641,7 @@ def import_subscriptions_csv(request):
                         currency=subscription_data['currency'],
                         renewal_period=subscription_data['renewal_period'],
                         start_date=subscription_data['start_date'],
+                        url=subscription_data['url'],
                         notes=subscription_data['notes']
                     )
                     imported_count += 1
@@ -673,6 +675,7 @@ def import_subscriptions_csv(request):
                             currency=subscription_data['currency'],
                             renewal_period=subscription_data['renewal_period'],
                             start_date=subscription_data['start_date'],
+                            url=subscription_data['url'],
                             notes=subscription_data['notes']
                         )
                         imported_count += 1
@@ -717,6 +720,7 @@ def import_subscriptions_csv(request):
                         'currency': sub.get('currency', ''),
                         'renewal_period': sub.get('renewal_period', ''),
                         'start_date': sub.get('start_date').isoformat() if sub.get('start_date') else '',
+                        'url': sub.get('url', ''),
                         'notes': sub.get('notes', '')
                     }
                     for sub in subscriptions_data

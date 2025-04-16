@@ -228,7 +228,7 @@ def generate_subscriptions_csv(subscriptions):
     writer = csv.writer(output)
 
     # Write header row
-    writer.writerow(['name', 'category', 'cost', 'currency', 'renewal_period', 'start_date', 'notes'])
+    writer.writerow(['name', 'category', 'cost', 'currency', 'renewal_period', 'start_date', 'url', 'notes'])
 
     # Write data rows
     for subscription in subscriptions:
@@ -240,6 +240,7 @@ def generate_subscriptions_csv(subscriptions):
             subscription.currency,
             subscription.renewal_period,
             subscription.start_date.isoformat(),
+            subscription.url or '',
             subscription.notes or ''
         ])
 

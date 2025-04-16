@@ -36,6 +36,12 @@
                     <div class="col-md-4 fw-bold">Start Date:</div>
                     <div class="col-md-8">{{ subscription.start_date }}</div>
                 </div>
+                {% if subscription.url %}
+                <div class="row mb-3">
+                    <div class="col-md-4 fw-bold">URL:</div>
+                    <div class="col-md-8"><a href="{{ subscription.url }}" target="_blank">{{ subscription.url }}</a></div>
+                </div>
+                {% endif %}
                 {% if subscription.notes %}
                 <div class="row mb-3">
                     <div class="col-md-4 fw-bold">Notes:</div>

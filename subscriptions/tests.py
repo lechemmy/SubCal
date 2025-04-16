@@ -158,6 +158,18 @@ class SubscriptionModelTest(TestCase):
         )
         self.assertEqual(subscription.notes, "Family subscription")
 
+    def test_subscription_with_url(self):
+        """Test that a subscription can have a URL."""
+        subscription = Subscription.objects.create(
+            name="Disney+",
+            cost=7.99,
+            currency="USD",
+            renewal_period="monthly",
+            start_date=date(2023, 1, 1),
+            url="https://www.disneyplus.com"
+        )
+        self.assertEqual(subscription.url, "https://www.disneyplus.com")
+
     def test_subscription_renewal_choices(self):
         """Test the renewal period choices."""
         # Test valid choices
@@ -346,6 +358,7 @@ class SubscriptionCreateViewTest(TestCase):
             'currency': 'USD',
             'renewal_period': 'monthly',
             'start_date': '2023-01-01',
+            'url': 'https://www.disneyplus.com',
             'notes': 'Family subscription'
         }
         response = self.client.post(self.url, data)
@@ -428,6 +441,8 @@ class SubscriptionUpdateViewTest(TestCase):
             'currency': 'USD',
             'renewal_period': 'monthly',
             'start_date': '2023-01-01',
+            'status': 'active',
+            'url': 'https://www.netflix.com',
             'notes': 'Premium subscription'
         }
         response = self.client.post(self.url, data)
