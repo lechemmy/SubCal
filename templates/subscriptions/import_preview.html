@@ -36,6 +36,7 @@
                                     <th>Currency</th>
                                     <th>Renewal Period</th>
                                     <th>Start Date</th>
+                                    <th>Status</th>
                                     <th>Notes</th>
                                 </tr>
                             </thead>
@@ -53,6 +54,7 @@
                                     <td>{{ subscription.currency }}</td>
                                     <td>{{ subscription.renewal_period }}</td>
                                     <td>{{ subscription.start_date|date:"Y-m-d" }}</td>
+                                    <td>{{ subscription.status|default:"active"|title }}</td>
                                     <td>{{ subscription.notes|default:"-" }}</td>
                                 </tr>
                                 {% endfor %}

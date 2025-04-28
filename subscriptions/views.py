@@ -606,7 +606,9 @@ def import_subscriptions_csv(request):
                     'currency': sub.get('currency', ''),
                     'renewal_period': sub.get('renewal_period', ''),
                     'url': sub.get('url', ''),
-                    'notes': sub.get('notes', '')
+                    'notes': sub.get('notes', ''),
+                    'status': sub.get('status', 'active'),
+                    'cancellation_date': sub.get('cancellation_date', None)
                 }
 
                 # Convert the date string back to a date object
@@ -642,7 +644,9 @@ def import_subscriptions_csv(request):
                         renewal_period=subscription_data['renewal_period'],
                         start_date=subscription_data['start_date'],
                         url=subscription_data['url'],
-                        notes=subscription_data['notes']
+                        notes=subscription_data['notes'],
+                        status=subscription_data['status'],
+                        cancellation_date=subscription_data['cancellation_date']
                     )
                     imported_count += 1
 
@@ -676,7 +680,9 @@ def import_subscriptions_csv(request):
                             renewal_period=subscription_data['renewal_period'],
                             start_date=subscription_data['start_date'],
                             url=subscription_data['url'],
-                            notes=subscription_data['notes']
+                            notes=subscription_data['notes'],
+                            status=subscription_data['status'],
+                            cancellation_date=subscription_data['cancellation_date']
                         )
                         imported_count += 1
                     except (IndexError, ValueError):
@@ -721,7 +727,9 @@ def import_subscriptions_csv(request):
                         'renewal_period': sub.get('renewal_period', ''),
                         'start_date': sub.get('start_date').isoformat() if sub.get('start_date') else '',
                         'url': sub.get('url', ''),
-                        'notes': sub.get('notes', '')
+                        'notes': sub.get('notes', ''),
+                        'status': sub.get('status', 'active'),
+                        'cancellation_date': sub.get('cancellation_date').isoformat() if sub.get('cancellation_date') else None
                     }
                     for sub in subscriptions_data
                 ]

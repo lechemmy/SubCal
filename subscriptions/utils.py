@@ -228,11 +228,12 @@ def generate_subscriptions_csv(subscriptions):
     writer = csv.writer(output)
 
     # Write header row
-    writer.writerow(['name', 'category', 'cost', 'currency', 'renewal_period', 'start_date', 'url', 'notes'])
+    writer.writerow(['name', 'category', 'cost', 'currency', 'renewal_period', 'start_date', 'url', 'notes', 'status', 'cancellation_date'])
 
     # Write data rows
     for subscription in subscriptions:
         category_name = subscription.category.name if subscription.category else ''
+        cancellation_date = subscription.cancellation_date.isoformat() if subscription.cancellation_date else ''
         writer.writerow([
             subscription.name,
             category_name,
@@ -241,7 +242,9 @@ def generate_subscriptions_csv(subscriptions):
             subscription.renewal_period,
             subscription.start_date.isoformat(),
             subscription.url or '',
-            subscription.notes or ''
+            subscription.notes or '',
+            subscription.status,
+            cancellation_date
         ])
 
     return output.getvalue()
@@ -265,13 +268,21 @@ def parse_subscriptions_csv(csv_file):
             if value == '':
                 row[key] = None
 
-        # Parse date
+        # Parse start_date
         if row.get('start_date'):
             try:
                 row['start_date'] = datetime.fromisoformat(row['start_date']).date()
             except ValueError:
                 # If date parsing fails, use current date
                 row['start_date'] = datetime.now().date()
+
+        # Parse cancellation_date if present
+        if row.get('cancellation_date'):
+            try:
+                row['cancellation_date'] = datetime.fromisoformat(row['cancellation_date']).date()
+            except ValueError:
+                # If date parsing fails, set to None
+                row['cancellation_date'] = None
 
         subscriptions.append(row)
 
