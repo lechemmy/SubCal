@@ -2,6 +2,9 @@ from django.shortcuts import render, redirect
 from django.urls import reverse_lazy
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView, TemplateView
 from .models import Subscription, Category, Currency
+from .mixins import UserDataMixin, ObjectAccessMixin
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
 from django import forms
 import calendar
@@ -17,7 +20,7 @@ from django.db.models import Sum
 from .utils import calculate_next_renewal_date, is_renewal_date, generate_subscriptions_csv, parse_subscriptions_csv, generate_categories_csv, parse_categories_csv, generate_currencies_csv, parse_currencies_csv
 
 # Create your views here.
-class SubscriptionListView(ListView):
+class SubscriptionListView(UserDataMixin, ListView):
     model = Subscription
     template_name = 'subscriptions/subscription_list.html'
     context_object_name = 'subscriptions'
@@ -130,12 +133,12 @@ class SubscriptionListView(ListView):
         context['annual_totals'] = annual_totals
         return context
 
-class SubscriptionDetailView(DetailView):
+class SubscriptionDetailView(ObjectAccessMixin, DetailView):
     model = Subscription
     template_name = 'subscriptions/subscription_detail.html'
     context_object_name = 'subscription'
 
-class SubscriptionCreateView(CreateView):
+class SubscriptionCreateView(UserDataMixin, CreateView):
     model = Subscription
     template_name = 'subscriptions/subscription_form.html'
     fields = ['name', 'category', 'cost', 'currency', 'renewal_period', 'start_date', 'url', 'notes']
@@ -152,7 +155,12 @@ class SubscriptionCreateView(CreateView):
 
         return form
 
-class SubscriptionUpdateView(UpdateView):
+    def form_valid(self, form):
+        # Set the user field to the current user
+        form.instance.user = self.request.user
+        return super().form_valid(form)
+
+class SubscriptionUpdateView(ObjectAccessMixin, UpdateView):
     model = Subscription
     template_name = 'subscriptions/subscription_form.html'
     fields = ['name', 'category', 'cost', 'currency', 'renewal_period', 'start_date', 'status', 'url', 'notes']
@@ -192,15 +200,16 @@ class SubscriptionUpdateView(UpdateView):
 
         return response
 
-class SubscriptionDeleteView(DeleteView):
+class SubscriptionDeleteView(ObjectAccessMixin, DeleteView):
     model = Subscription
     template_name = 'subscriptions/subscription_confirm_delete.html'
     context_object_name = 'subscription'
     success_url = reverse_lazy('subscription-list')
 
+@login_required
 def home(request):
-    # Get all active subscriptions
-    subscriptions = Subscription.objects.filter(status='active')
+    # Get all active subscriptions for the current user
+    subscriptions = Subscription.objects.filter(status='active', user=request.user)
 
     # Get current date and date 2 weeks from now
     today = datetime.now().date()
@@ -231,6 +240,7 @@ def home(request):
 
     return render(request, 'subscriptions/home.html', context)
 
+@login_required
 def calendar_view(request):
     # Get current month, year, and view type
     now = datetime.now()
@@ -243,10 +253,10 @@ def calendar_view(request):
     current_month = now.month
     current_year = now.year
 
-    # Get all subscriptions
+    # Get all subscriptions for the current user
     # For past dates, include all subscriptions (including cancelled ones for historical view)
     # For future dates, only include active subscriptions
-    subscriptions = Subscription.objects.all()
+    subscriptions = Subscription.objects.filter(user=request.user)
 
     # Create a wrapper class to hold subscription and is_past flag
     class SubscriptionWrapper:
@@ -380,14 +390,15 @@ def calendar_view(request):
 
     return render(request, 'subscriptions/subscription_calendar.html', context)
 
+@login_required
 def day_view(request, year, month, day):
     # Create a date object for the selected day
     selected_date = date(year, month, day)
     now = datetime.now().date()
     is_past = selected_date < now
 
-    # Get all subscriptions
-    subscriptions = Subscription.objects.all()
+    # Get all subscriptions for the current user
+    subscriptions = Subscription.objects.filter(user=request.user)
 
     # Calculate subscriptions that renew on this day
     day_subscriptions = []
@@ -415,37 +426,39 @@ def day_view(request, year, month, day):
     return render(request, 'subscriptions/subscription_day.html', context)
 
 
-class SettingsView(TemplateView):
+class SettingsView(LoginRequiredMixin, TemplateView):
     template_name = 'subscriptions/settings.html'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['categories'] = Category.objects.all().order_by(Lower('name'))
-        context['currencies'] = Currency.objects.all().order_by('code')
+        # Filter categories and currencies by the current user
+        context['categories'] = Category.objects.filter(user=self.request.user).order_by(Lower('name'))
+        context['currencies'] = Currency.objects.filter(user=self.request.user).order_by('code')
         return context
 
 
-class CategoryListView(ListView):
+class CategoryListView(UserDataMixin, ListView):
     model = Category
     template_name = 'subscriptions/category_list.html'
     context_object_name = 'categories'
 
     def get_queryset(self):
-        return Category.objects.all().order_by(Lower('name'))
+        return super().get_queryset().order_by(Lower('name'))
 
 
-class CategoryCreateView(CreateView):
+class CategoryCreateView(LoginRequiredMixin, CreateView):
     model = Category
     template_name = 'subscriptions/category_form.html'
     fields = ['name']
     success_url = reverse_lazy('settings')
 
     def form_valid(self, form):
+        form.instance.user = self.request.user
         messages.success(self.request, f'Category {form.instance.name} created successfully!')
         return super().form_valid(form)
 
 
-class CategoryUpdateView(UpdateView):
+class CategoryUpdateView(ObjectAccessMixin, UpdateView):
     model = Category
     template_name = 'subscriptions/category_form.html'
     fields = ['name']
@@ -456,7 +469,7 @@ class CategoryUpdateView(UpdateView):
         return super().form_valid(form)
 
 
-class CategoryDeleteView(DeleteView):
+class CategoryDeleteView(ObjectAccessMixin, DeleteView):
     model = Category
     template_name = 'subscriptions/category_confirm_delete.html'
     context_object_name = 'category'
@@ -470,42 +483,45 @@ class CategoryDeleteView(DeleteView):
         return result
 
 
-class CurrencyListView(ListView):
+class CurrencyListView(UserDataMixin, ListView):
     model = Currency
     template_name = 'subscriptions/currency_list.html'
     context_object_name = 'currencies'
-    ordering = ['code']
+
+    def get_queryset(self):
+        return super().get_queryset().order_by('code')
 
 
-class CurrencyCreateView(CreateView):
+class CurrencyCreateView(LoginRequiredMixin, CreateView):
     model = Currency
     template_name = 'subscriptions/currency_form.html'
     fields = ['code', 'name', 'symbol', 'is_default']
     success_url = reverse_lazy('settings')
 
     def form_valid(self, form):
-        # If this currency is set as default, unset any other default currencies
+        form.instance.user = self.request.user
+        # If this currency is set as default, unset any other default currencies for this user
         if form.instance.is_default:
-            Currency.objects.filter(is_default=True).update(is_default=False)
+            Currency.objects.filter(user=self.request.user, is_default=True).update(is_default=False)
         messages.success(self.request, f'Currency {form.instance.code} created successfully!')
         return super().form_valid(form)
 
 
-class CurrencyUpdateView(UpdateView):
+class CurrencyUpdateView(ObjectAccessMixin, UpdateView):
     model = Currency
     template_name = 'subscriptions/currency_form.html'
     fields = ['code', 'name', 'symbol', 'is_default']
     success_url = reverse_lazy('settings')
 
     def form_valid(self, form):
-        # If this currency is set as default, unset any other default currencies
+        # If this currency is set as default, unset any other default currencies for this user
         if form.instance.is_default:
-            Currency.objects.filter(is_default=True).exclude(pk=form.instance.pk).update(is_default=False)
+            Currency.objects.filter(user=self.request.user, is_default=True).exclude(pk=form.instance.pk).update(is_default=False)
         messages.success(self.request, f'Currency {form.instance.code} updated successfully!')
         return super().form_valid(form)
 
 
-class CurrencyDeleteView(DeleteView):
+class CurrencyDeleteView(ObjectAccessMixin, DeleteView):
     model = Currency
     template_name = 'subscriptions/currency_confirm_delete.html'
     context_object_name = 'currency'
@@ -519,14 +535,19 @@ class CurrencyDeleteView(DeleteView):
         return result
 
 
+@login_required
 def set_currency_default(request, pk):
     """
-    Set a currency as the default currency.
+    Set a currency as the default currency for the current user.
     """
-    currency = Currency.objects.get(pk=pk)
-    currency.is_default = True
-    currency.save()
-    messages.success(request, f'Currency {currency.code} set as default successfully!')
+    try:
+        # Get the currency and check if it belongs to the current user
+        currency = Currency.objects.get(pk=pk, user=request.user)
+        currency.is_default = True
+        currency.save()
+        messages.success(request, f'Currency {currency.code} set as default successfully!')
+    except Currency.DoesNotExist:
+        messages.error(request, "You don't have permission to set this currency as default.")
 
     # Redirect back to the referring page, or to settings if no referrer
     referer = request.META.get('HTTP_REFERER')
@@ -535,12 +556,13 @@ def set_currency_default(request, pk):
     return redirect('settings')
 
 
+@login_required
 def export_subscriptions_csv(request):
     """
     Export all subscriptions to a CSV file.
     """
-    # Get all subscriptions
-    subscriptions = Subscription.objects.all().order_by(Lower('name'))
+    # Get all subscriptions for the current user
+    subscriptions = Subscription.objects.filter(user=request.user).order_by(Lower('name'))
 
     # Generate CSV data
     csv_data = generate_subscriptions_csv(subscriptions)
@@ -586,6 +608,7 @@ def export_currencies_csv(request):
     return response
 
 
+@login_required
 def import_subscriptions_csv(request):
     """
     Import subscriptions from a CSV file.
@@ -633,7 +656,7 @@ def import_subscriptions_csv(request):
                     # Get or create category if provided
                     category = None
                     if subscription_data.get('category'):
-                        category, _ = Category.objects.get_or_create(name=subscription_data['category'])
+                        category, _ = Category.objects.get_or_create(name=subscription_data['category'], user=request.user)
 
                     # Create subscription
                     Subscription.objects.create(
@@ -646,7 +669,8 @@ def import_subscriptions_csv(request):
                         url=subscription_data['url'],
                         notes=subscription_data['notes'],
                         status=subscription_data['status'],
-                        cancellation_date=subscription_data['cancellation_date']
+                        cancellation_date=subscription_data['cancellation_date'],
+                        user=request.user
                     )
                     imported_count += 1
 
@@ -669,7 +693,7 @@ def import_subscriptions_csv(request):
                         # Get or create category if provided
                         category = None
                         if subscription_data.get('category'):
-                            category, _ = Category.objects.get_or_create(name=subscription_data['category'])
+                            category, _ = Category.objects.get_or_create(name=subscription_data['category'], user=request.user)
 
                         # Create subscription
                         Subscription.objects.create(
@@ -682,7 +706,8 @@ def import_subscriptions_csv(request):
                             url=subscription_data['url'],
                             notes=subscription_data['notes'],
                             status=subscription_data['status'],
-                            cancellation_date=subscription_data['cancellation_date']
+                            cancellation_date=subscription_data['cancellation_date'],
+                            user=request.user
                         )
                         imported_count += 1
                     except (IndexError, ValueError):
