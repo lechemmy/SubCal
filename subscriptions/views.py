@@ -799,14 +799,15 @@ def import_categories_csv(request):
                 imported_count = 0
                 skipped_count = 0
                 for category_data in categories_data:
-                    # Skip if category with this name already exists
-                    if Category.objects.filter(name=category_data['name']).exists():
+                    # Skip if category with this name already exists for this user
+                    if Category.objects.filter(name=category_data['name'], user=request.user).exists():
                         skipped_count += 1
                         continue
 
                     # Create category
                     Category.objects.create(
-                        name=category_data['name']
+                        name=category_data['name'],
+                        user=request.user
                     )
                     imported_count += 1
 
@@ -830,14 +831,15 @@ def import_categories_csv(request):
                     try:
                         category_data = categories_data[int(index)]
 
-                        # Skip if category with this name already exists
-                        if Category.objects.filter(name=category_data['name']).exists():
+                        # Skip if category with this name already exists for this user
+                        if Category.objects.filter(name=category_data['name'], user=request.user).exists():
                             skipped_count += 1
                             continue
 
                         # Create category
                         Category.objects.create(
-                            name=category_data['name']
+                            name=category_data['name'],
+                            user=request.user
                         )
                         imported_count += 1
                     except (IndexError, ValueError):
