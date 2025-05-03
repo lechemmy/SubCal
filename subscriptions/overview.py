@@ -1,4 +1,5 @@
 from django.views.generic import TemplateView
+from django.contrib.auth.mixins import LoginRequiredMixin
 from .models import Subscription, Category, Currency
 import requests
 import json
@@ -7,7 +8,7 @@ from datetime import date, datetime
 from dateutil.relativedelta import relativedelta
 
 
-class OverviewView(TemplateView):
+class OverviewView(LoginRequiredMixin, TemplateView):
     template_name = 'subscriptions/overview.html'
 
     def get_context_data(self, **kwargs):
@@ -28,8 +29,8 @@ class OverviewView(TemplateView):
         context['selected_year'] = selected_year
         context['current_year'] = current_year
 
-        # Get all subscriptions
-        subscriptions = Subscription.objects.all()
+        # Get all subscriptions for the current user
+        subscriptions = Subscription.objects.filter(user=self.request.user)
 
         # Get active subscriptions for cost calculations
         active_subscriptions = [s for s in subscriptions if not (hasattr(s, 'status') and s.status == 'cancelled')]

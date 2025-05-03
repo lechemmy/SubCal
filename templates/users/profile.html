@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+
+{% block title %}My Profile - SubCal{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h3>User Profile</h3>
+                </div>
+                <div class="card-body">
+                    <h4>{{ user_profile.username }}</h4>
+                    <p><strong>Name:</strong> {{ user_profile.get_full_name|default:"Not provided" }}</p>
+                    <p><strong>Email:</strong> {{ user_profile.email }}</p>
+                    <p><strong>Joined:</strong> {{ user_profile.date_joined|date:"F j, Y" }}</p>
+                    <p><strong>Last Login:</strong> {{ user_profile.last_login|date:"F j, Y g:i A"|default:"Never" }}</p>
+
+                    {% if user_profile.is_admin %}
+                    <div class="badge bg-primary mb-3">Admin User</div>
+                    {% endif %}
+
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'profile_edit' %}" class="btn btn-primary">Edit Profile</a>
+                        <a href="{% url 'password_change' %}" class="btn btn-secondary">Change Password</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h3>Subscription Summary</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card mb-3">
+                                <div class="card-body text-center">
+                                    <h5>Active Subscriptions</h5>
+                                    <h2>{{ active_subscriptions.count }}</h2>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card mb-3">
+                                <div class="card-body text-center">
+                                    <h5>Total Subscriptions</h5>
+                                    <h2>{{ user_profile.subscription_count }}</h2>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h4 class="mt-4">Monthly Costs</h4>
+                    {% with monthly_costs=user_profile.total_monthly_cost %}
+                        {% if monthly_costs %}
+                            <ul class="list-group">
+                                {% for currency, amount in monthly_costs.items %}
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        {{ currency }}
+                                        <span class="badge bg-primary rounded-pill">
+                                            {% if currency == 'USD' %}${% elif currency == 'EUR' %}€{% elif currency == 'GBP' %}£{% endif %}
+                                            {{ amount|floatformat:2 }}
+                                        </span>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <p>No active subscriptions.</p>
+                        {% endif %}
+                    {% endwith %}
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3>Recent Subscriptions</h3>
+                </div>
+                <div class="card-body">
+                    {% if active_subscriptions %}
+                        <h5>Active Subscriptions</h5>
+                        <div class="list-group mb-4">
+                            {% for subscription in active_subscriptions|slice:":5" %}
+                                <a href="{% url 'subscription-detail' subscription.id %}" class="list-group-item list-group-item-action">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h5 class="mb-1">{{ subscription.name }}</h5>
+                                        <small>{{ subscription.get_currency_symbol }}{{ subscription.cost }} ({{ subscription.get_renewal_period_display }})</small>
+                                    </div>
+                                    <p class="mb-1">
+                                        {% if subscription.category %}
+                                            <span class="badge bg-secondary">{{ subscription.category.name }}</span>
+                                        {% endif %}
+                                    </p>
+                                </a>
+                            {% endfor %}
+                        </div>
+                        {% if active_subscriptions.count > 5 %}
+                            <div class="text-center">
+                                <a href="{% url 'subscription-list' %}" class="btn btn-outline-primary">View All Subscriptions</a>
+                            </div>
+                        {% endif %}
+                    {% else %}
+                        <p>No active subscriptions.</p>
+                        <a href="{% url 'subscription-create' %}" class="btn btn-primary">Add Subscription</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
