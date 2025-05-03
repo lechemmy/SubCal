@@ -4,8 +4,6 @@ WORKDIR /app
 
 # Install dependencies
 COPY requirements.txt .
-# Fix requirements.txt (remove trailing % from python-dateutil line)
-RUN sed -i 's/%$//' requirements.txt
 # Install dependencies and gunicorn
 RUN pip install --no-cache-dir -r requirements.txt gunicorn
 
