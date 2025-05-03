@@ -1,4 +1,3 @@
-version: '3'
 
 services:
   web:
@@ -18,6 +17,7 @@ services:
       bash -c "python manage.py migrate &&
                python create_default_categories.py &&
                python create_default_currencies.py &&
+               python manage.py collectstatic --noinput &&
                gunicorn --bind 0.0.0.0:8000 SubCal.wsgi:application"
     restart: unless-stopped
 

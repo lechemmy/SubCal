@@ -15,13 +15,10 @@ RUN mkdir -p /app/staticfiles /app/data
 ENV STATIC_ROOT=/app/staticfiles
 ENV DATABASE_DIR=/app/data
 
-# Run migrations and create default data
-RUN python manage.py migrate
-RUN python create_default_categories.py
-RUN python create_default_currencies.py
+# Directories will be populated at runtime via docker-compose.yml
+# (migrations and default data creation are handled there)
 
-# Collect static files
-RUN python manage.py collectstatic --noinput
+# Static files collection is handled at runtime via docker-compose.yml
 
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1
