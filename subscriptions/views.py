@@ -146,7 +146,7 @@ class SubscriptionCreateView(UserDataMixin, CreateView):
 
     def get_form(self, form_class=None):
         form = super().get_form(form_class)
-        form.fields['category'].queryset = Category.objects.all().order_by(Lower('name'))
+        form.fields['category'].queryset = Category.objects.filter(user=self.request.user).order_by(Lower('name'))
 
         # Set default currency if one exists
         default_currency = Currency.objects.filter(is_default=True).first()
@@ -168,7 +168,7 @@ class SubscriptionUpdateView(ObjectAccessMixin, UpdateView):
 
     def get_form(self, form_class=None):
         form = super().get_form(form_class)
-        form.fields['category'].queryset = Category.objects.all().order_by(Lower('name'))
+        form.fields['category'].queryset = Category.objects.filter(user=self.request.user).order_by(Lower('name'))
 
         # If the subscription is cancelled, show the cancellation date field
         if self.object and self.object.status == 'cancelled':
