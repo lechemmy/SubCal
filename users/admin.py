@@ -5,12 +5,13 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import User
 from django.utils.translation import gettext_lazy as _
+from unfold.admin import ModelAdmin, StackedInline
 
 from .models import UserProfile
 
 
 # Define an inline admin descriptor for UserProfile model
-class UserProfileInline(admin.StackedInline):
+class UserProfileInline(StackedInline):
     model = UserProfile
     can_delete = False
     verbose_name_plural = 'profile'
@@ -28,7 +29,7 @@ admin.site.register(User, CustomUserAdmin)
 
 
 @admin.register(UserProfile)
-class UserProfileAdmin(admin.ModelAdmin):
+class UserProfileAdmin(ModelAdmin):
     """
     Admin configuration for the UserProfile model.
     """
